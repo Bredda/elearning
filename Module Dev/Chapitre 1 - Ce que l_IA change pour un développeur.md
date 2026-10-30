@@ -4,7 +4,11 @@
 
 ## 1.1 D'où ça vient — l'essentiel
 
-L'IA générative repose sur 70 ans de recherche. Ce qui change depuis 2022, c'est l'accessibilité programmatique : les LLM sont devenus des API comme les autres, consommables en quelques lignes de code. Pour un développeur, ça signifie que l'IA n'est plus un domaine réservé aux équipes de recherche, c'est une brique d'intégration.
+L'IA générative repose sur 70 ans de recherche, avec ses périodes d'enthousiasme et ses « hivers » de désillusion. Le tournant technique date de 2017 : l'architecture **Transformer** (Google) rend possible l'entraînement de modèles de langage à très grande échelle, les LLM (*Large Language Models*). En 2020, GPT-3 est le premier LLM puissant accessible par une API.
+
+Pour le grand public, la bascule vient plus tard : fin 2022, ChatGPT, qui s'appuie sur GPT-3.5, montre qu'une simple interface conversationnelle suffit à rendre ces modèles utilisables par tous. Dans la foulée, l'IA entre dans l'IDE (Copilot) et dans les architectures applicatives (LangChain), puis les modèles se mettent à agir et pas seulement à répondre : agents, MCP.
+
+Ce qui change pour un développeur, c'est l'accessibilité programmatique : les LLM sont devenus des API comme les autres, consommables en quelques lignes de code. L'IA n'est plus un domaine réservé aux équipes de recherche, c'est une brique d'intégration.
 
 ![D'où ça vient — l'essentiel](./assets/fig1.01.png "D'où ça vient — l'essentiel")
 
@@ -22,16 +26,16 @@ Un LLM est fondamentalement **sans état**. Entre deux questions, il ne se souvi
 
 Ce que ça implique dans la pratique : pour qu'une conversation soit cohérente, c'est l'application (GitHub Copilot, ChatGPT, ...) qui doit gérer l'historique complet à chaque appel. Un assistant qui "se souvient" de ce qu'on lui a dit hier ne mémorise rien lui-même : l'application stocke l'historique et le réinjecte dans chaque prompt.
 
-C'est ce qui rend la **context window** (fenêtre contextuelle) si critique : c'est le seul vecteur d'information dont le modèle dispose à l'instant T.
+C'est ce qui rend la **context window** (fenêtre contextuelle) si critique : c'est le seul canal par lequel le modèle reçoit l'information propre à votre échange, en plus de ce qu'il a appris à l'entraînement.
 
 ### Tokens
 
-Un LLM ne manipule pas directement du texte, il lit des tokens. Un token correspond approximativement à ¾ d'un mot en français (les mots courants font souvent un token, les mots rares ou techniques peuvent en faire plusieurs).
+Un LLM ne manipule pas directement du texte, il lit des tokens. Un token représente en moyenne un peu moins d'un mot (les mots courants font souvent un token, les mots rares ou techniques peuvent en faire plusieurs).
 
 Ce que ça implique concrètement :
 
 - Le coût d'un appel API est calculé en tokens (entrée + sortie)
-- Toute chose étant égale par ailleurs, le nombre de tokens en entrée et sortie impacte fortement la rapidité de la réponse
+- Toute chose étant égale par ailleurs, c'est surtout le nombre de tokens générés en sortie qui détermine la rapidité de la réponse ; un prompt volumineux en entrée la ralentit aussi, mais dans une moindre mesure
 - La context window est limitée en tokens
 - Un fichier de code de 500 lignes représente environ 5 000 à 8 000 tokens selon le langage
 
@@ -41,19 +45,21 @@ Ce que ça implique concrètement :
 
 ### Context window
 
-C'est la quantité totale de texte (c.-à-d. en tokens) que le modèle peut traiter en une seule fois : prompt système + historique de conversation + instruction courante. Cette limite, spécifique à chaque modèle, est techniquement indépassable.
+C'est la quantité totale de texte (c.-à-d. en tokens) que le modèle peut traiter en une seule fois : prompt système + historique de conversation + instruction courante + réponse générée. Cette limite, spécifique à chaque modèle, est techniquement indépassable.
 
 Comme il n'y a pas de mémoire entre les appels, la context window est souvent chargée intentionnellement : historique de conversation, fichiers de code pertinents, documentation, exemples. Cette accumulation a un coût et une limite.
 
 Quelques repères :
 
 - GPT 3.5: 4 096 tokens
-- GPT 6 series : 1M tokens
+- GPT 6 series : 1,05M tokens
 - Claude Sonnet 3.5 : 200 000 tokens
 - Claude Sonnet 5.5 : 1M tokens
-- GLM 5.2 : 1M tokens
+- Gemini 3.8 Flash : 1M tokens
 
 Après avoir fortement évolué depuis leurs premières versions, la plupart des modèles grand public sont stabilisés aujourd'hui autour de 1M de tokens.
+
+Attention : ces chiffres sont la limite technique maximale du modèle. La fenêtre réellement disponible dans un outil (assistant, IDE, agent) peut très souvent être plus basse : l'outil ou l'offre commerciale la plafonne, ou la fenêtre étendue doit être activée explicitement. Vérifiez la valeur effective dans votre outil plutôt que de vous fier à la fiche du modèle.
 
 Plus la context window est grande, plus le modèle peut recevoir de contexte. Mais une fenêtre contextuelle plus grande n'est pas obligatoirement la panacée : si elle est surchargée, elle augmente le coût de la requête et le temps de réponse, et dégrade la qualité de l'attention sur les éléments importants (phénomène [lost in the middle](https://www.emergentmind.com/papers/2307.03172) par exemple), donc la qualité de la réponse.
 
@@ -65,19 +71,19 @@ La température contrôle le degré d'aléatoire dans la génération du modèle
 
 Pour comprendre techniquement : à chaque étape, le modèle calcule une distribution de probabilité sur tous les tokens possibles. La température modifie cette distribution avant l'échantillonnage.
 
-- **Température = 0** : le token le plus probable est toujours sélectionné. Comportement déterministe et reproductible.
+- **Température basse (proche de 0)** : les tokens les plus probables dominent. Plus la température est basse, plus la génération est déterministe et reproductible.
 - **Température élevée (0.7–1.0)** : les tokens moins probables ont plus de chances d'être sélectionnés. Les réponses sont plus variées, parfois plus créatives, parfois moins cohérentes.
 
 En pratique pour un dev :
 
 - **Température basse** pour générer du code, des tests, des données structurées
-- **Température haute** pour brainstormer des solutions, générer des alternatives, rédiger de la documentation
+- **Température haute** pour brainstormer des solutions, générer des alternatives, proposer des formulations
 
-Aujourd'hui, la température a tendance à être remplacé au sein de certaines gammmes de modèle par un gestion de l'effort de reflexion (*thinking effort*), [NEED FINISHING SENTENCE, REPLACE BUT NOT SAME]
+Certaines gammes de modèles récentes n'exposent plus la température : l'aléa est alors fixé par l'éditeur, et c'est un réglage de l'effort de réflexion (*thinking effort*) qui permet d'ajuster la profondeur du raisonnement avant la réponse. Ce sont deux leviers différents : un effort de réflexion élevé ne rend pas la génération plus déterministe, il donne simplement plus de temps de calcul au modèle pour raisonner.
 
 ### Ce que le modèle fait vraiment
 
-Un LLM prédit le prochain token le plus probable étant donné tout ce qui précède. Il ne "comprend" pas le code au sens humain, il a appris des patterns statistiques sur des milliards de lignes de code.
+Un LLM génère sa réponse en prédisant, token après token, la suite la plus probable étant donné tout ce qui précède. Il a appris des patterns statistiques sur des milliards de lignes de code : il produit du code plausible, sans vérifier que ce code fait ce qu'on attend.
 
 Conséquence directe : le modèle peut produire du code syntaxiquement parfait qui ne fait pas ce qui est attendu: introduire des bugs subtils qui "ressemblent" à du bon code, ou inventer des APIs qui n'existent pas. C'est ce qu'on appelle une **hallucination**: une réponse plausible mais incorrecte.
 
@@ -91,7 +97,7 @@ Un LLM seul a des limitations structurelles importantes. Comprendre ces limitati
 
 ![Les briques d'intégration](./assets/fig1.06.png "Les briques d'intégration")
 
-**Limitation 1 : le modèle ne connaît que ce qu'on lui donne.**
+**Limitation 1 : le modèle ne connaît pas votre contexte.**
 
 Un LLM est entraîné sur des données publiques jusqu'à une certaine date. Il ne connaît pas la documentation interne d'un projet, les contrats d'un client, la codebase propriétaire.
 
@@ -131,7 +137,7 @@ C'est la brique de base du fonctionnement agentique.
 
 ### Agents et systèmes agentiques
 
-Un agent utilise le tool calling en boucle pour accomplir une tâche complexe en plusieurs étapes. Le modèle décide quels outils appeler, dans quel ordre, en fonction du résultat de chaque étape.
+Un agent utilise le tool calling en boucle pour accomplir une tâche complexe en plusieurs étapes. Le modèle décide quels outils appeler, dans quel ordre, en fonction du résultat de chaque étape. Cette boucle réflexion → action → observation est connue sous le nom de **ReAct** (*Reason + Act*).
 
 ![ReAct Agent](./assets/fig.1.09.png "ReAct Agent")
 
@@ -145,7 +151,7 @@ C'est ce qui permet à Claude Code de lire le projet, d'écrire du code, d'exéc
 
 ### MCP — Model Context Protocol
 
-Standard ouvert (initié par Anthropic et cédé à l'Agentic AI Foundation en décembre 2025) qui standardise la façon dont les agents se connectent aux outils externes. 
+Standard ouvert (initié par Anthropic et cédé en décembre 2025 à l'Agentic AI Foundation, un fonds de la Linux Foundation) qui standardise la façon dont les agents se connectent aux outils externes. 
 
 Avant MCP : connecter un agent à GitHub + Jira + une BDD = trois intégrations sur mesure à développer et maintenir. Avec MCP : un agent compatible se branche sur tous les outils qui supportent le protocole.
 
@@ -163,12 +169,9 @@ Réponse à la limitation 4 : un **hook** est un script (commande shell, appel H
 
 Exemple : un hook post-édition qui relance automatiquement la suite de tests dès qu'un fichier source est modifié, sans dépendre du fait que l'agent "pense" à le faire.
 
-### Composer ces briques : subagents et plugins
+### Subagents — déléguer une sous-tâche
 
-Une fois skills, hooks, tool calling et MCP disponibles, deux niveaux de composition permettent de les organiser à plus grande échelle :
-
-- Un **subagent** est un agent secondaire, à contexte isolé et éventuellement à modèle dédié (un modèle rapide et économique pour une tâche de recherche répétitive, le modèle principal réservé au raisonnement), invoqué par l'agent principal pour une sous-tâche précise.
-- Un **plugin** empaquette skills, hooks, subagents et serveurs MCP dans une unité versionnée, installable en une commande depuis un dépôt Git ou un marketplace. C'est le niveau qui permet de partager une configuration d'agent complète entre développeurs ou entre projets — sujet du Chapitre 4 (panorama) et du Chapitre 6 (pratique d'équipe).
+Un **subagent** est un agent secondaire, à contexte isolé et éventuellement à modèle dédié (un modèle rapide et économique pour une tâche de recherche répétitive, le modèle principal réservé au raisonnement), invoqué par l'agent principal pour une sous-tâche précise. Il permet d'organiser le travail à plus grande échelle sans encombrer le contexte de l'agent principal.
 
 ---
 
@@ -176,9 +179,9 @@ Une fois skills, hooks, tool calling et MCP disponibles, deux niveaux de composi
 
 ### GPT — OpenAI
 
-Intégré dans GitHub Copilot, Azure OpenAI Service. Depuis l'été 2026, OpenAI structure sa gamme en paliers de capacité nommés, indépendants du numéro de génération : **Sol** (le plus capable), **Terra** (l'équilibre courant), **Luna** (rapide et économique, gros volumes). 
+Intégré dans GitHub Copilot, Azure OpenAI Service. OpenAI structure sa gamme en paliers de capacité nommés : **Astra** (le plus capable, le modèle de référence pour le raisonnement complexe et le code), **Sol** (une performance proche d'Astra à moindre coût), **Terra** (rapide et efficace, orienté raisonnement visuel et usage d'un poste de travail), **Luna** (le plus économique, pour les gros volumes de tâches ciblées).
 
-Le chiffre identifie la génération (GPT-5.6, puis GPT-6), le nom identifie le palier — les deux évoluent indépendamment.
+Le numéro identifie la génération (GPT-6, GPT-6.1), le nom identifie le palier, et les deux évoluent indépendamment : les paliers ne changent pas de génération en même temps (au moment de la rédaction, Astra et Luna sont en GPT-6, Sol et Terra en GPT-6.1).
 
 ### Claude — Anthropic
 
@@ -192,11 +195,17 @@ Intégration native dans Firebase, Google Cloud et l'écosystème Google.
 
 Segmentation par palier : **Pro** (capacité maximale, raisonnement complexe), **Flash** (le workhorse — bon rapport coût/performance, taillé pour l'agentic et le développement logiciel), **Flash-Lite** (le plus économique, gros volumes). Dernière sortie notable pour le dev : **gemini-3.8-flash** (septembre 2026), qui progresse spécifiquement sur l'ingénierie logicielle longue durée et le raisonnement agentique multi-étapes.
 
-### Mistral — Mistral AI 🇫🇷
+### Mistral — Mistral AI
 
-Modèles disponibles en open source ou via API, déployables on-premise ou sur infrastructure souveraine. 
+Mistral AI se distingue des autres acteurs de cette section par trois particularités :
 
-Gamme structurée par taille et par usage : **Large** (le flagship, raisonnement et tâches agentiques les plus exigeantes), **Medium** (bon compromis coût/performance sur le code et l'agentique), **Codestral** (spécialisé code, large context window), et **Devstral** (taillé pour l'agentic coding, conçu pour tourner dans des scaffolds d'agents comme Claude Code ou Codex CLI). Pertinent quand les contraintes de confidentialité excluent les providers cloud américains.
+- **Un éditeur français, avec des modèles maison.** Mistral développe ses propres modèles. Son catalogue héberge aussi des modèles tiers (GLM de Z.ai, DeepSeek), qu'il faut distinguer des modèles Mistral.
+- **Des modèles à poids ouverts.** Les poids de plusieurs modèles sont téléchargeables, ce qui permet de les auto-héberger (on-premise ou sur une infrastructure souveraine) en plus de l'accès par API. « Poids ouverts » ne veut pas dire open source au sens strict, et les licences varient selon le modèle : Apache 2.0 pour Large 3, Small 4 et les Ministral 3, licences spécifiques pour Large 4 et Medium 3.5. À lire avant tout usage commercial.
+- **Une gamme organisée par taille.** **Large** (généraliste multimodal, le plus capable), **Medium** (orienté agentique et code), **Small** (hybride, qui réunit instruct, raisonnement et code dans un modèle léger), **Ministral** (petits modèles de 3B, 8B et 14B de paramètres) et **Codestral** (complétion de code).
+
+Cette gamme bouge vite : Devstral (agentic coding) et Magistral (raisonnement) figurent désormais parmi les modèles dépréciés, avec Medium 3.5 et Small 4 comme remplaçants.
+
+L'intérêt principal : répondre aux contraintes de confidentialité ou de souveraineté qui excluent les fournisseurs cloud américains. L'hébergement effectif (API Mistral ou auto-hébergement) et la licence restent à valider modèle par modèle.
 
 > **Ce qui compte pour choisir un modèle :** la qualité sur le type de tâche (benchmark de code), la taille de la context window, les contraintes data client, et le coût par token. Pas le marketing.
 
@@ -268,7 +277,7 @@ La compétence clé : savoir calibrer le niveau de délégation et de validation
 
 ---
 
-## 📖 Glossaire du module
+## Glossaire du module
 
 Les termes suivants sont utilisés tout au long des 6 chapitres.
 
@@ -290,7 +299,7 @@ Technique de prompting qui demande au modèle de raisonner étape par étape ava
 Découpage d'un document ou d'une codebase en segments pour l'indexation dans un système RAG. La qualité du chunking impacte directement la qualité des réponses.
 
 **Context window**
-Mémoire de travail du modèle. Quantité totale de texte (prompt + historique + réponse) qu'il peut traiter en une seule fois. Mesurée en tokens.
+Espace de travail du modèle sur une requête : quantité totale de texte (prompt + historique + réponse) qu'il peut traiter en une seule fois. En dehors de cet espace, il n'a aucune mémoire. Mesurée en tokens.
 
 **Embeddings**
 Représentations vectorielles de texte ou de code. Permettent de mesurer la similarité sémantique entre deux passages. Base technique du retrieval dans les systèmes RAG.
@@ -313,14 +322,14 @@ Protocole standard initié par Anthropic (puis cédé à l'Agentic AI Foundation
 **On-premise**
 Déploiement d'un modèle sur l'infrastructure propre de l'organisation. Aucune donnée ne sort du périmètre. Requis pour les contextes à contraintes de souveraineté maximales.
 
-**Plugin (agent plugin)**
-Unité versionnée qui empaquette skills, hooks, subagents et serveurs MCP, installable en une commande depuis un dépôt Git ou un marketplace. Permet de partager une configuration d'agent complète entre développeurs ou entre projets, plutôt qu'un simple fichier de contexte à copier-coller.
-
 **Prompt / Prompt engineering**
 Instruction envoyée au modèle. Le prompt engineering est l'art de formuler des instructions qui produisent des résultats fiables et prévisibles (Chapitre 3).
 
 **RAG (Retrieval-Augmented Generation)**
 Architecture qui connecte un LLM à une base documentaire ou de code : avant de répondre, le modèle recherche les passages pertinents et s'appuie dessus. Résout le problème des données internes inconnues du modèle.
+
+**ReAct (Reason + Act)**
+Schéma de fonctionnement d'un agent : le modèle alterne réflexion, appel d'un outil et observation du résultat, puis recommence jusqu'à pouvoir répondre. C'est la boucle décrite dans la section Agents.
 
 **Retrieval**
 Étape de recherche dans un système RAG : trouver les passages les plus pertinents dans la base pour répondre à une question donnée. La qualité du retrieval conditionne la qualité des réponses.
@@ -335,13 +344,13 @@ Capacité du modèle à produire une réponse dans un format structuré (JSON, X
 Agent secondaire à contexte isolé, éventuellement rattaché à un modèle dédié, invoqué par l'agent principal pour traiter une sous-tâche précise sans polluer le contexte principal.
 
 **System prompt**
-Instruction permanente envoyée au modèle avant chaque échange. Définit le rôle, les contraintes, le contexte. Équivalent programmatique du `AGENTS.md`.
+Instruction permanente envoyée au modèle avant chaque échange. Définit le rôle, les contraintes, le contexte. Les fichiers de contexte projet (`AGENTS.md`…) jouent un rôle comparable à l'échelle d'un projet : l'outil en injecte le contenu dans le contexte du modèle.
 
 **Température**
-Paramètre qui contrôle l'aléatoire de la génération. Basse = déterministe (code, tests). Haute = varié (brainstorming, alternatives).
+Paramètre qui contrôle l'aléatoire de la génération. Plus elle est basse, plus la sortie est déterministe (code, tests). Haute = varié (brainstorming, alternatives). Certains modèles récents ne l'exposent plus.
 
 **Token**
-Unité de traitement et de facturation d'un LLM. ~¾ d'un mot en français. Détermine le coût des appels API et la limite de la context window.
+Unité de traitement et de facturation d'un LLM. Un peu moins d'un mot en moyenne. Détermine le coût des appels API et la limite de la context window.
 
 **Tool calling / Function calling**
 Mécanisme permettant au LLM de demander l'exécution d'une fonction externe (API, BDD, fichier). L'application exécute et renvoie le résultat. Brique de base des agents.
@@ -367,7 +376,7 @@ _8 questions — environ 8 minutes_
 - C) Il formule plusieurs réponses candidates et sélectionne la meilleure
 - D) Il traduit le prompt en requête structurée puis reformule le résultat
 
-> ✅ **Réponse : B** — C'est le mécanisme fondamental : prédiction token par token. Pas de base de données, pas de sélection entre alternatives. Une génération séquentielle probabiliste.
+> ✅ **Réponse : B** — C'est le mécanisme fondamental : une génération séquentielle, token par token, où chaque token est choisi selon une distribution de probabilité. Dans son fonctionnement de base, la réponse n'est donc ni retrouvée dans une base de données (A), ni choisie parmi plusieurs réponses complètes générées en amont (C), ni issue d'une requête structurée (D).
 
 ---
 
@@ -382,25 +391,25 @@ _8 questions — environ 8 minutes_
 
 ---
 
-**Question 3.** Pour générer des tests unitaires déterministes sur une fonction existante, quelle température est la plus adaptée ?
+**Question 3.** Pour générer des tests unitaires reproductibles sur une fonction existante, avec un modèle qui expose le paramètre de température, quelle valeur est la plus adaptée ?
 
 - A) Haute (0.8–1.0): pour avoir des cas de test variés et créatifs
 - B) Moyenne (0.4–0.6): pour un équilibre entre créativité et précision
 - C) Basse (0.0–0.2): pour des résultats reproductibles et prévisibles
 - D) La température n'a aucun impact sur la génération de tests
 
-> ✅ **Réponse : C** — Les tests doivent être déterministes et précis. Température basse = comportement reproductible. La créativité n'est pas un critère souhaitable ici.
+> ✅ **Réponse : C** — Les tests doivent être précis et reproductibles : plus la température est basse, plus la génération est déterministe. La créativité (A) et un compromis (B) ne sont pas des critères souhaitables ici, et D est faux puisque la température modifie directement le tirage des tokens. Certains modèles récents n'exposent plus ce paramètre, auquel cas la question ne se pose pas.
 
 ---
 
-**Question 4.** Vous voulez fournir à un agent des instructions à appliquer, de façon pérenne, chaque fois qu'il génère des tests (framework à utiliser, cas à couvrir, conventions de mock). Quel est le meilleur moyen ?
+**Question 4.** Vous voulez qu'un agent applique des instructions précises (framework à utiliser, cas à couvrir, conventions de mock) uniquement lorsqu'il génère des tests, sans les ajouter au fichier de contexte permanent du projet. Quel est le meilleur moyen ?
 
 - A) Rédiger un prompt détaillé et le retaper à chaque demande de génération de tests
 - B) Configurer un hook qui s'exécute après chaque modification de fichier
 - C) Créer un subagent dédié, avec son propre contexte isolé
 - D) Écrire une skill dédiée à la génération de tests, chargée à la demande
 
-> ✅ **Réponse : D** — Une skill est exactement faite pour ça : une procédure précise, écrite une fois, chargée par l'agent seulement quand la tâche correspond. Le prompt retapé (A) n'a rien de pérenne. Le hook (B) automatise une action déterministe (relancer une commande) mais ne porte pas des instructions de génération. Le subagent (C) isole un contexte mais ne résout pas en soi le besoin d'instructions réutilisables.
+> ✅ **Réponse : D** — Une skill est exactement faite pour ça : une procédure précise, écrite une fois, chargée par l'agent seulement quand la tâche correspond. Le prompt retapé (A) n'est pas réutilisable : il faut le reproduire à chaque demande. Le hook (B) automatise une action déterministe (relancer une commande) mais ne porte pas des instructions de génération. Le subagent (C) isole un contexte mais ne résout pas en soi le besoin d'instructions réutilisables.
 
 ---
 
