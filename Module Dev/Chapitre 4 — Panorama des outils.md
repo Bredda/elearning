@@ -1,155 +1,133 @@
 # Chapitre 4 — Panorama des outils
 
-## 4.1 Deux familles d'outils
+---
 
-Les outils IA pour développeurs se divisent en deux familles architecturalement différentes. La distinction n'est pas cosmétique, elle impacte la façon dont l'outil comprend le projet, la profondeur de l'autonomie qu'il peut exercer, et les cas d'usage pour lesquels il est le plus pertinent.
+Les outils présentés dans ce chapitre évoluent plus vite que le reste du module. En quelques mois, des offres gratuites ont disparu ou changé de nom, des produits ont été rachetés ou rebaptisés, et des projets open source ont cessé d'être maintenus. Les abonnements, les quotas et les garanties sur les données changent régulièrement.
 
-![Deux familles : assistants in-IDE vs IDE full IA](./assets/fig4.01.png "Deux familles : assistants in-IDE vs IDE full IA")
+Pour cette raison, ce chapitre ne donne ni tarifs ni quotas. Il décrit ce qui dure : la nature des outils (leur forme d'usage, leur éditeur, leur ouverture), les concepts qu'ils partagent, et les questions à poser avant d'en adopter un. Pour les offres et les conditions, la source de référence est toujours la page officielle de l'outil, consultée le jour de la décision.
 
-### Assistants in-IDE
+Ce panorama décrit l'état du marché fin 2026.
 
-Un assistant in-IDE est une extension qui s'intègre dans un éditeur existant (VS Code, JetBrains, Neovim). Il observe ce qui est tapé, le fichier ouvert, et éventuellement le workspace, et propose des suggestions ou répond à des questions dans un panel chat.
+---
 
-**Caractéristiques :**
+## 4.1 Les formes d'usage
 
-- L'éditeur reste celui qu'on utilise déjà
-- Le contexte projet est fourni explicitement (fichiers ouverts, `#codebase`, fichier d'instructions)
-- L'intégration enterprise est généralement plus mature : SSO, politiques de données, licences gérées par la DSI
-- Adoption progressive possible, on peut commencer par la complétion et monter en autonomie
+Plutôt que de classer les outils par famille, il est plus utile de les classer par **forme d'usage**, car un même outil en prend souvent plusieurs : GitHub Copilot existe en extension d'IDE, en agent en terminal et en agent cloud ; Claude Code en terminal, en extension et en application desktop ; Devin en IDE, en terminal et dans le cloud.
 
-**Représentants :** GitHub Copilot, Claude Code (mode IDE), Gemini CLI
+| Forme | Principe | Atouts | Points d'attention |
+|---|---|---|---|
+| **IDE natif IA** (application desktop) | Un éditeur conçu autour de l'IA, qui indexe la codebase pour donner un contexte projet au modèle sans configuration manuelle | Expérience fluide sur les tâches multi-fichiers, peu de configuration initiale | Migration depuis l'éditeur habituel, coût d'adoption non nul |
+| **Extension ou plugin d'éditeur** | L'IA s'ajoute à un éditeur existant (VS Code, JetBrains, Visual Studio…) | On garde son éditeur et ses habitudes, adoption progressive, intégration enterprise généralement mature | Le contexte projet est fourni explicitement (fichiers ouverts, fichier d'instructions) |
+| **Agent en terminal** (CLI) | Un agent qui lit le projet, planifie, exécute des commandes et itère, indépendamment de l'éditeur | Autonomie sur les tâches larges (migration, refacto), automatisable (scripts, CI) | La supervision passe par les diffs et le terminal, pas par l'éditeur |
+| **Agent cloud** (en ligne) | Un agent qui travaille sur un serveur ou un bac à sable distant, souvent déclenché depuis une issue ou une PR | Tâches asynchrones et parallèles, pas de machine locale mobilisée | Le code est envoyé sur l'infrastructure du fournisseur (voir 4.8) |
 
-Cette frontière s'estompe : plusieurs assistants in-IDE (GitHub Copilot en tête, avec Copilot CLI) proposent désormais aussi un mode agent autonome en terminal, hors de l'éditeur — historiquement le terrain des agents CLI ci-dessous.
-
-### IDE full IA
-
-Un IDE full IA est un éditeur conçu nativement autour de l'IA. La compréhension du projet n'est pas une feature ajoutée, c'est l'architecture de base. L'éditeur indexe en permanence la codebase pour que le modèle ait un contexte projet sans configuration manuelle.
-
-**Caractéristiques :**
-
-- Compréhension du projet natif et quasi-automatique
-- Expérience plus fluide sur les tâches multi-fichiers
-- Moins de configuration initiale pour les projets complexes
-- Migration depuis un IDE existant requise. Coût d'adoption non nul
-
-**Représentants :** Cursor, Windsurf, Zed
+Ces formes se mélangent. Un IDE natif IA propose aussi un agent, une extension propose un mode terminal, un agent en terminal s'installe dans un éditeur. La forme d'usage compte pour deux raisons : elle détermine ce que l'outil voit du projet, et elle détermine où partent les données.
 
 ---
 
 ## 4.2 Les outils en détail
 
+Chaque fiche situe l'outil : qui l'édite, si son code est ouvert, son historique, ses formes d'usage et ses particularités. Elle ne revient ni sur les tarifs ni sur les conditions (voir l'introduction du chapitre et les sections 4.7 et 4.8).
+
 ### GitHub Copilot
 
-**Type :** Assistant in-IDE
-**Modèles disponibles :** GPT, Claude Sonnet, Gemini (selon plan)
-**Intégration :** VS Code, JetBrains, Visual Studio, Neovim, Xcode
-
-Le standard de facto en entreprise. 90% des Fortune 100 l'utilisent. L'avantage principal n'est pas la performance brute du modèle, c'est l'intégration enterprise : politiques de données claires, gestion des licences centralisée, SSO, Copilot Enterprise pour les contraintes de confidentialité maximales.
-
-**Modes :**
-
-- **Inline completion** : suggestions contextuelles pendant la frappe
-- **Copilot Chat** : chat dans l'éditeur, questions sur le code, explications
-- **Edit mode** : modifications multi-fichiers selon les instructions
-- **Agent mode** : tâches autonomes avec planification et exécution
-- **Copilot CLI** : agent autonome en terminal, hors de l'IDE — en disponibilité générale depuis 2026, avec ses propres modes Plan et Autopilot. Rapproche Copilot de la catégorie "agent CLI" (Claude Code, Codex CLI, Gemini CLI)
-
-**Fichier de contexte :** `.github/copilot-instructions.md` (et `AGENTS.md` désormais supporté nativement)
-
-**Plan Free :** 2 000 complétions et 50 messages chat par mois. Suffisant pour une utilisation de formation ou exploratoire.
-
----
+**Éditeur :** GitHub (Microsoft).
+**Code :** service propriétaire. Certains composants sont publiés : l'extension Copilot Chat pour VS Code l'a été sous licence MIT, la CLI sous une licence propriétaire dont le code est consultable.
+**Formes d'usage :** extension d'IDE (VS Code, JetBrains, Visual Studio, Xcode, Eclipse), agent en terminal (Copilot CLI), agent cloud (Copilot cloud agent, qui travaille sur GitHub).
+**Particularités :** intégré à GitHub (issues, pull requests, revue de code), modèles de plusieurs fournisseurs selon le plan. Dans VS Code, les modes sont Ask, Agent et Plan. Lit `.github/copilot-instructions.md` et `AGENTS.md`.
 
 ### Claude Code
 
-**Type :** Agent CLI (aussi disponible en extension VS Code et JetBrains)
-**Modèle :** Claude Sonnet
-**Intégration :** Terminal, VS Code, JetBrains
+**Éditeur :** Anthropic.
+**Code :** propriétaire. La licence du dépôt est « tous droits réservés », soumise aux conditions commerciales d'Anthropic. Le dépôt public héberge les issues, des plugins et des exemples.
+**Formes d'usage :** agent en terminal, extensions IDE (VS Code, JetBrains), application desktop, intégration à GitHub (mention `@claude`).
+**Particularités :** utilise uniquement les modèles Claude, via l'API d'Anthropic ou via les offres d'Amazon, Google Cloud et Microsoft. Skills, hooks, subagents et plugins y sont particulièrement développés, et plusieurs autres outils savent lire ses formats (skills, plugins, `CLAUDE.md`). Lit `CLAUDE.md` et, en son absence, `AGENTS.md`.
 
-Claude Code est conçu pour le workflow agentic : il lit le projet, planifie, exécute, itère. Contrairement à un assistant in-IDE qui attend les instructions, Claude Code peut opérer en autonomie sur des tâches complexes avec un niveau de supervision choisi.
+### Codex (OpenAI)
 
-**Modes :**
-
-- **Interactive** : conversation dans le terminal, contrôle total
-- **Plan mode** : le modèle présente un plan avant d'exécuter à valider avant de lancer
-- **Sub-agents** : décompose les tâches complexes en sous-tâches parallèles ou séquentielles
-
-**Fichier de contexte :** `CLAUDE.md` (à la racine du projet)
-
-**Ce qui le différencie :** la gestion du contexte projet est plus profonde. Claude Code lit les fichiers dont il a besoin, pas seulement ceux qui sont ouverts dans l'éditeur. Sur des tâches de refacto large ou de migration, c'est significatif.
-
-**Plan Free :** quota généreux via claude.ai, suffisant pour de l'exploration.
-
----
+**Éditeur :** OpenAI.
+**Code :** la CLI est publiée sous licence Apache-2.0 (open source).
+**Formes d'usage :** agent en terminal (Codex CLI), extension IDE, application desktop, agent cloud (Codex Web).
+**Particularités :** modèles OpenAI. Connexion par compte ChatGPT ou par clé API. Codex est l'un des outils à l'origine du standard `AGENTS.md` (voir Chapitre 3).
 
 ### Cursor
 
-**Type :** IDE full IA (fork de VS Code)
-**Modèles disponibles :** Claude, GPT, Gemini (selon plan)
-**Intégration :** IDE autonome
+**Éditeur :** Anysphere.
+**Code :** propriétaire.
+**Formes d'usage :** IDE natif IA (fork de VS Code), agent en terminal (CLI, commande `agent`), agents cloud (anciennement « background agents »), lancés depuis l'IDE, le web, Slack, GitHub ou Linear.
+**Particularités :** a popularisé le concept d'IDE natif IA : l'éditeur indexe la codebase en permanence, propose une complétion avancée (Tab) et un mode agent. Modèles de plusieurs fournisseurs, plus des modèles propres (famille Composer, qui est un modèle et non un mode). Lit `.cursor/rules/` et `AGENTS.md`, et charge aussi les skills d'autres outils. Propose un mode de confidentialité (Privacy Mode).
 
-Cursor a popularisé le concept d'IDE natif IA. La codebase est indexée en permanence, ce qui permet au modèle de répondre à des questions sur l'ensemble du projet sans que le développeur ait à spécifier quels fichiers sont pertinents. L'expérience est plus fluide sur les projets complexes, au prix d'une migration depuis son éditeur habituel.
+### Devin Desktop (anciennement Windsurf)
 
-**Modes :**
-
-- **Tab completion** : complétion avancée multi-lignes
-- **Chat** : questions sur la codebase entière
-- **Composer** : modifications multi-fichiers
-- **Agent** : tâches autonomes
-
-**Fichier de contexte :** `.cursorrules`
-
-**Adoption :** environ 18% de part de marché payant parmi les IDE IA en 2025.
-
----
-
-### Windsurf
-
-**Type :** IDE full IA
-**Modèles disponibles :** Claude, GPT, Gemini (selon plan)
-**Intégration :** IDE autonome (Codeium)
-
-Concurrent direct de Cursor. Interface plus épurée, bonne gestion du contexte sur les projets multi-dépôts. Développé par Codeium. En juillet 2025, le rachat prévu par OpenAI (3 Md$) est tombé à l'eau pour des raisons de propriété intellectuelle ; Google DeepMind a récupéré une licence sur la technologie et une partie de l'équipe R&D (dont le CEO), puis Cognition (éditeur de Devin) a racheté le reste — produit, marque, équipe, contrats. L'évolution du produit est à suivre dans ce contexte de rachat mouvementé.
-
-**Fichier de contexte :** `.windsurfrules`
-
----
+**Éditeur :** Cognition.
+**Code :** propriétaire.
+**Historique :** Windsurf était développé par Codeium. En juillet 2025, le rachat prévu par OpenAI (3 Md$) est tombé à l'eau pour des raisons de propriété intellectuelle. Google DeepMind a récupéré une licence sur la technologie et une partie de l'équipe R&D (dont le CEO), puis Cognition (éditeur de Devin) a racheté le reste (produit, marque, équipe, contrats). Le 2 juin 2026, Windsurf est devenu Devin Desktop : c'est le même IDE, rebaptisé sous la marque Devin.
+**Formes d'usage :** IDE desktop (base VS Code), Devin CLI en terminal, Devin Cloud (agent autonome dans le cloud), Devin Review pour les pull requests.
+**Particularités :** un panneau de pilotage réunit les agents locaux et les agents cloud. Lit `AGENTS.md`, `.devin/rules/` et, par import, des fichiers d'autres outils (`CLAUDE.md`, `.cursor/rules/`). Les anciens chemins `.windsurf/` restent lus.
 
 ### Zed
 
-**Type :** IDE full IA
-**Modèles disponibles :** Claude, GPT, Gemini (selon plan)
-**Intégration :** IDE autonome, écrit en Rust
+**Éditeur :** Zed Industries.
+**Code :** open source (GPL-3.0 pour l'essentiel, certains composants en Apache-2.0).
+**Formes d'usage :** éditeur natif écrit en Rust (ce n'est pas un fork de VS Code), avec un agent intégré.
+**Particularités :** misé sur la performance et la réactivité. Zed sait aussi héberger des agents externes (Claude, Codex, OpenCode, Copilot, Cursor…) grâce à l'ACP (*Agent Client Protocol*), un protocole qui permet à un éditeur de piloter un agent tiers. Plusieurs autres outils (Devin CLI, Mistral Vibe) s'y branchent aussi.
 
-Positionné sur la performance et la réactivité de l'éditeur autant que sur l'IA. Fonctionnalités agentiques (édits multi-fichiers, agent autonome) alignées sur Cursor et Windsurf, avec une base de code volontairement plus légère.
+### Google : de Gemini CLI à Antigravity
 
-**Fichier de contexte :** `AGENTS.md`
+**Éditeur :** Google.
+**Gemini CLI :** agent en terminal open source (Apache-2.0). Depuis le 18 juin 2026, son périmètre est réduit aux licences d'entreprise (Gemini Code Assist) : l'accès individuel est passé à Antigravity.
+**Antigravity :** plateforme de développement agentique. Application desktop (agents en parallèle), CLI (`agy`), IDE, SDK Python, extensions pour VS Code, Visual Studio, JetBrains, Zed, Xcode et Eclipse. Modèles Gemini et de partenaires. Le code n'est pas présenté comme open source.
+**Particularités :** c'est un exemple de transition de produit : un outil très diffusé change de périmètre et de nom en quelques mois. Antigravity CLI reprend les mécanismes de Gemini CLI (skills, hooks, subagents, extensions devenues plugins) et lit `GEMINI.md` et `AGENTS.md`.
 
----
+### JetBrains : AI Assistant et Junie
 
-### Gemini CLI
+**Éditeur :** JetBrains, éditeur des IDE du même nom.
+**Formes d'usage :** AI Assistant est un plugin intégré aux IDE JetBrains (chat, agents, complétion). Junie est l'agent de code de JetBrains, utilisable en terminal (Junie CLI) et dans les IDE.
+**Particularités :** Junie fonctionne avec le modèle de votre choix (clés d'API personnelles, modèles locaux). Pertinent pour les équipes qui travaillent déjà dans l'écosystème JetBrains (Java, Kotlin, Python, .NET…).
 
-**Type :** Agent CLI
-**Modèle :** Gemini Flash / Gemini Pro
-**Intégration :** Terminal
+### Mistral Vibe
 
-Lancé en 2025, Gemini CLI est l'équivalent de Claude Code pour l'écosystème Google. Context window particulièrement large (1M tokens), ce qui lui permet de charger des projets entiers en une seule fois. **Gratuit** avec un quota généreux (60 requêtes par minute, 1 000 par jour) — ce qui en fait un bon point d'entrée sans engagement financier.
+**Éditeur :** Mistral AI (France).
+**Formes d'usage :** Vibe est un produit unifié qui regroupe l'assistant de chat (anciennement Le Chat) et un agent de code. L'agent de code existe en terminal (`vibe`, paquet Python), en extension VS Code et en sessions cloud. Il se branche aussi sur JetBrains et Zed via l'ACP.
+**Particularités :** fonctionne avec les modèles hébergés par Mistral, avec des modèles locaux ou avec n'importe quelle API compatible OpenAI. Pertinent quand la souveraineté ou le recours à des modèles à poids ouverts est un critère (voir Chapitre 1).
 
-**Fichier de contexte :** `GEMINI.md`
+### Alternatives open source
 
----
+Les outils open source sont portés par des équipes plus petites et évoluent plus vite. Ils permettent de choisir son modèle (clés d'API personnelles, modèles locaux) et d'auditer le code de l'outil lui-même.
 
-### Codex CLI
+| Outil | Formes d'usage | Licence | À savoir |
+|---|---|---|---|
+| **OpenCode** | Terminal, application desktop (bêta) | MIT | Agent en terminal indépendant de tout fournisseur de modèle : plus de 75 fournisseurs via Models.dev, modèles locaux (Ollama, par exemple) |
+| **Cline** | Extension VS Code, plugin JetBrains (non open source), CLI, application desktop | Apache-2.0 | Agent autonome, aussi proposé sous forme de SDK. Roo Code en est issu (voir ci-dessous) |
+| **Kilo Code** | Extension VS Code, plugin JetBrains, CLI, agent cloud | MIT | Sa CLI est un fork d'OpenCode |
+| **Goose** | Application desktop, CLI, API | Apache-2.0 | Agent généraliste, pas seulement dédié au code. Passé de Block à la Linux Foundation (Agentic AI Foundation) |
+| **Aider** | Terminal | Apache-2.0 | Programmation en binôme avec un LLM, centrée sur git |
 
-**Type :** Agent CLI (aussi disponible en extension VS Code)
-**Modèle :** GPT-5 / GPT-5-Codex
-**Intégration :** Terminal, VS Code
+Un projet open source peut aussi s'arrêter. En mai 2026, l'extension Roo Code a été arrêtée et son dépôt archivé. Le dépôt de Continue indique ne plus être activement maintenu. Avant d'adopter un outil open source dans une équipe, regardez sa gouvernance (société, fondation), le nombre de mainteneurs et le rythme des publications.
 
-L'équivalent OpenAI de Claude Code et Gemini CLI : un agent qui lit le projet, planifie et exécute en autonomie, avec un mode plan/review avant exécution. Fait partie du même écosystème que ChatGPT (authentification, quotas partagés selon l'abonnement).
+### À surveiller
 
-**Fichier de contexte :** `AGENTS.md` (Codex est l'un des outils à l'origine du standard — voir Chapitre 3)
+- **Kiro** (AWS) : un IDE basé sur Code OSS, avec une CLI, centré sur le développement piloté par les spécifications (la demande est transformée en exigences, conception et tâches avant l'implémentation).
+- **Amp** : un agent en terminal et en application web, présenté par son éditeur comme indépendant.
 
-**À mentionner aussi : OpenCode.** Agent CLI open source, non lié à un éditeur de modèle en particulier — connecté à plus de 75 providers (OpenAI, Google, modèles locaux via Ollama...). Une alternative pertinente quand la neutralité vis-à-vis du fournisseur de modèle est un critère de choix, au prix d'une intégration enterprise moins mature que Copilot ou Claude Code.
+### Ce qu'en disent les développeurs
+
+L'enquête Stack Overflow 2026 (30 903 réponses au total) a demandé à ses répondants quels agents ou assistants de code ils avaient utilisés au cours de l'année écoulée. Il s'agit d'un usage déclaré, avec plusieurs réponses possibles, par des répondants volontaires : ce n'est pas une part de marché.
+
+| Outil | Part des répondants l'ayant utilisé |
+|---|---|
+| Claude Code | 65,5 % |
+| GitHub Copilot | 58,7 % |
+| OpenAI Codex | 29,5 % |
+| Cursor | 25,5 % |
+| Google Antigravity | 16,0 % |
+| Gemini Code Assist | 14,6 % |
+| OpenCode | 13,6 % |
+| JetBrains AI | 12,8 % |
+| Windsurf | 6,5 % |
+| Cline | 4,5 % |
+
+Retenez surtout deux enseignements : la plupart des développeurs combinent plusieurs outils d'IA (40,5 % en utilisent trois à cinq par semaine, toutes catégories d'outils confondues), et un outil très cité cette année peut être remplacé l'année suivante.
 
 ---
 
@@ -189,70 +167,239 @@ L'écosystème MCP compte aujourd'hui des milliers de serveurs. Les références
 
 ![Infrastructure](./assets/fig4.09.png "Infrastructure")
 
-**Pour découvrir l'écosystème :** [mcpmarket.com/leaderboards](https://mcpmarket.com/leaderboards) maintient un classement des serveurs par popularité mis à jour en continu.
+**Vérifiez l'état d'un serveur avant de l'installer.** Les serveurs MCP changent de mainteneur et de statut. Plusieurs serveurs de référence historiques (GitHub, GitLab, PostgreSQL, SQLite, Brave Search, Slack, Sentry, Puppeteer…) ont été archivés, certains au profit de serveurs maintenus par les éditeurs eux-mêmes (par exemple le serveur officiel de GitHub, ou celui de Brave). Le dépôt des serveurs de référence ne conserve aujourd'hui qu'une poignée de serveurs d'exemple (Fetch, Filesystem, Git, Memory, Time…), qu'il présente comme des implémentations pédagogiques, pas comme des solutions prêtes pour la production.
+
+**Pour découvrir l'écosystème :** le [registre MCP officiel](https://registry.modelcontextprotocol.io/) référence les serveurs publiés. Des annuaires tiers existent aussi : ils sont pratiques, mais ne garantissent ni la qualité ni la sécurité des serveurs listés.
 
 **Comment ça s'installe :**
 
-L'installation se fait en deux étapes : ajouter le serveur dans le fichier de configuration de l'outil, et fournir les credentials nécessaires (généralement via des variables d'environnement).
+L'installation se fait en deux étapes : déclarer le serveur dans la configuration de l'outil, et fournir les credentials nécessaires (généralement via des variables d'environnement). Le protocole est le même partout, mais **la configuration diffère d'un outil à l'autre**, y compris dans le nom de la clé racine :
 
-- **Claude Code**: fichier `.claude/settings.json` à la racine du projet ou dans `~/.claude/settings.json` pour une config globale
-- **Cursor**: même structure JSON dans ~/.cursor/mcp.json :
-  ![Comment ça s'installe](./assets/fig4.10.png "Comment ça s'installe")
-- **VsCode Copliot**:  
-  ![Comment ça s'installe](./assets/fig4.11.png "Comment ça s'installe")
+| Outil | Où se déclare un serveur MCP | Clé racine |
+|---|---|---|
+| Claude Code | `.mcp.json` (projet, à committer), `~/.claude.json` (local ou utilisateur), ou commande `claude mcp add` | `mcpServers` |
+| Cursor | `.cursor/mcp.json` (projet), `~/.cursor/mcp.json` (global) | `mcpServers` |
+| VS Code (Copilot) | `.vscode/mcp.json` (commande « MCP: Add Server ») | `servers` |
+| Copilot CLI | `~/.copilot/mcp-config.json` ou `copilot mcp add` | `mcpServers` |
+| Codex | `~/.codex/config.toml` ou `.codex/config.toml` (projet), ou `codex mcp add` | tables `[mcp_servers.<nom>]` |
+| OpenCode | `opencode.json` (projet) ou `~/.config/opencode/opencode.json` | `mcp` |
+| Zed | fichier de paramètres de Zed | `context_servers` |
+| Devin | `.devin/mcp_config.json` (projet), `~/.config/devin/mcp_config.json` (utilisateur) | `mcpServers` |
 
-**Note de sécurité importante :** les serveurs MCP s'exécutent avec les permissions de l'utilisateur courant. Un serveur `filesystem` mal configuré peut lire l'intégralité du disque. Un serveur qui combine accès à des données privées et capacité à faire des requêtes externes est un vecteur d'exfiltration potentiel. En contexte de mission, ne configurer que les serveurs nécessaires et avec le minimum de permissions requis.
+Exemple avec Claude Code : la commande ajoute le serveur au fichier `.mcp.json` du projet, que l'équipe partage via git.
+
+```bash
+claude mcp add --scope project context7 -- npx -y @upstash/context7-mcp
+```
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  }
+}
+```
+
+Dans VS Code, le même type de serveur se déclare dans `.vscode/mcp.json`, avec une autre clé racine :
+
+```json
+{
+  "servers": {
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}
+```
+
+Ne recopiez pas une configuration d'un outil à l'autre sans vérifier le format attendu.
+
+**Note de sécurité importante :** les serveurs MCP locaux s'exécutent avec les permissions de l'utilisateur courant. Un serveur `filesystem` mal configuré peut lire l'intégralité du disque. Un serveur qui combine accès à des données privées et capacité à faire des requêtes externes est un vecteur d'exfiltration potentiel. Un serveur de navigateur comme Playwright MCP n'est pas une frontière de sécurité non plus. En contexte de mission, ne configurer que les serveurs nécessaires, d'un éditeur identifié, et avec le minimum de permissions requis.
 
 ---
 
-## Agent Plugins — le niveau au-dessus de MCP
+## 4.4 Plugins : empaqueter la configuration d'un agent
 
-MCP standardise l'accès de l'agent aux outils externes. Les **Agent Plugins** standardisent l'agent lui-même : un plugin empaquette skills, hooks, subagents et serveurs MCP dans une unité versionnée, installable en une commande — et partageable entre développeurs, entre projets, voire entre outils.
+MCP standardise l'accès de l'agent aux outils externes. Les **plugins** vont plus loin : ils empaquettent la configuration de l'agent lui-même dans une unité versionnée et installable. Ils répondent à un problème vu au Chapitre 3 : configurer un agent (fichier de contexte, skills réutilisables, hooks de vérification) est un travail manuel, répété projet par projet et outil par outil.
 
-C'est la réponse à un problème très concret vu au Chapitre 3 : configurer un agent (fichier de contexte, skills réutilisables, hooks de vérification) est aujourd'hui un travail manuel, répété projet par projet, outil par outil. Un plugin le rend installable en une commande, versionné comme n'importe quelle dépendance.
+Un plugin contient généralement des **skills** et des **serveurs MCP**, et selon l'outil des **agents spécialisés**, des **hooks** et des **commandes**. Les skills et les serveurs MCP sont les composants réellement portables d'un outil à l'autre. Les agents, les hooks et les commandes dépendent du client qui les lit.
 
-**Ce qu'un plugin peut contenir :**
+### Deux écosystèmes équivalents
 
-- Des **skills** portables (dossier `skills/`, un `SKILL.md` par savoir-faire)
-- Des serveurs **MCP** préconfigurés
-- Des **agents** ou **subagents** spécialisés
-- Des **hooks**, des **slash commands** — composants spécifiques à certains clients (VS Code/Copilot notamment)
+Claude Code et l'écosystème VS Code / GitHub Copilot ont chacun leur format de plugin, et ils convergent :
 
-**Comment ça s'installe :**
+| | Claude Code | VS Code / GitHub Copilot |
+|---|---|---|
+| Format | `.claude-plugin/plugin.json` | Agent Plugins, un standard ouvert (`plugin.json`). VS Code lit aussi les formats Copilot, Claude et OpenPlugin |
+| Catalogue | Un *marketplace* est un dépôt avec un fichier `.claude-plugin/marketplace.json`, c'est un catalogue, pas une boutique hébergée. Celui d'Anthropic est ajouté par défaut | Des marketplaces au schéma de Claude Code, dont certains fournis par GitHub |
+| Installation | `/plugin marketplace add <propriétaire>/<dépôt>`, puis `/plugin install <plugin>@<marketplace>` | `Chat: Install Plugin from Source` (URL Git ou dossier local) ou éditeur de personnalisations. Commandes `/plugin` dans Copilot CLI |
+| Portée | Utilisateur, projet (via la configuration versionnée) ou local | Utilisateur ou espace de travail |
+| Contenu | Skills, agents, hooks, serveurs MCP | Skills et MCP (portables) ; agents, hooks et commandes dans l'espace de noms du client |
 
-- Depuis un marketplace, dans la vue Extensions de VS Code (`@agentPlugins`)
-- Depuis un dépôt Git directement, via la commande `Chat: Install Plugin From Source`
-- En local, pour développer son propre plugin, via le paramètre `chat.pluginLocations`
+D'autres outils ont leur variante : Cursor (`.cursor-plugin/plugin.json`, et aussi le standard Agent Plugins), Codex (`.codex-plugin/plugin.json`, non pris en charge dans son extension IDE), Devin CLI (`.devin-plugin/plugin.json`, avec repli sur le format Claude), Antigravity (les extensions Gemini sont devenues des plugins). OpenCode a une notion différente : des modules JavaScript ou des paquets npm qui ajoutent des outils et des hooks, plus proches d'une extension de code que d'un paquet de skills.
 
-**Ce qui différencie un plugin d'un simple fichier de contexte :** le versioning sémantique, l'installation en une commande, et la portabilité — un même plugin peut fonctionner sur VS Code, sur le CLI Copilot, et (avec le namespace adapté) sur Claude Code. Sujet pratique du Chapitre 6.
+La documentation de VS Code prévient que la prise en charge d'un format ne garantit pas que chaque composant fonctionne dans chaque client. Plusieurs réglages de VS Code sur les plugins sont d'ailleurs encore marqués expérimentaux : le sujet est jeune.
+
+### Alternative sans plugin : un socle portable dans le dépôt
+
+Un plugin se justifie quand il faut distribuer et mettre à jour une configuration sur plusieurs projets. Pour un seul dépôt, une alternative plus légère existe : versionner dans le projet un fichier `AGENTS.md` et des skills dans un dossier `.agents/skills/`. Ce dossier est lu par Copilot, Codex, Cursor, Devin, Zed, OpenCode et Antigravity. Claude Code lit `.claude/skills/` (que Copilot, Cursor et OpenCode lisent aussi).
+
+| | Plugin | Socle dans le dépôt |
+|---|---|---|
+| Distribution | Installation en une commande, depuis un marketplace ou un dépôt Git | Chaque projet embarque sa copie |
+| Versionnement et mises à jour | Versionné, mis à jour de façon centralisée | Mis à jour projet par projet |
+| Portabilité | Dépend du format du client | Skills et fichier de contexte lisibles par la plupart des outils |
+| Sujet du Chapitre 6 | Plugin d'équipe | Standards partagés par projet |
+
+Dans les deux cas, un plugin installé peut exécuter du code avec les droits de l'utilisateur : il se relit comme n'importe quelle dépendance (voir Chapitre 6).
 
 ---
 
-## 4.4 Matrice de choix de l'IDE
+## 4.5 Comparer les outils
 
-Il n'y a pas de bon choix universel. Le bon outil dépend du contexte.
+Les outils changent de nom et de chemins, mais ils reposent sur les mêmes concepts. Deux comparatifs permettent de s'y retrouver : le premier par forme d'usage, le second par concept.
 
-**Règles pratiques :**
+### Formes d'usage et ouverture du code
 
-- Le client a une politique DSI stricte sur les outils : Copilot Enterprise
-- Le projet de formation ou d'exploration, sans contrainte : Gemini CLI (gratuit) ou Claude Code
-- La tâche est un workflow agentic complexe (migration, refacto large) : Claude Code, Codex CLI, ou Copilot CLI
-- L'équipe veut migrer vers un IDE full IA : Cursor, Windsurf ou Zed
-- La neutralité vis-à-vis du fournisseur de modèle est un critère : OpenCode
+Le signe « — » signifie « non documenté ou sans objet ».
+
+| Outil | IDE ou application desktop | Extension d'éditeur | Terminal | Cloud | Code ouvert |
+|---|---|---|---|---|---|
+| GitHub Copilot | ✓ (application Copilot) | ✓ | ✓ | ✓ | Non (certains composants publiés) |
+| Claude Code | ✓ (desktop) | ✓ | ✓ | ✓ (mention `@claude` dans GitHub) | Non |
+| Codex | ✓ (desktop) | ✓ | ✓ | ✓ (Codex Web) | CLI : Apache-2.0 |
+| Cursor | ✓ (IDE) | — | ✓ (`agent`) | ✓ (agents cloud) | Non |
+| Devin | ✓ (Desktop) | — | ✓ (Devin CLI) | ✓ (Devin Cloud) | Non précisé |
+| Zed | ✓ (IDE) | — | — | — | GPL-3.0 (composants Apache-2.0) |
+| Antigravity | ✓ (App, IDE) | ✓ | ✓ (`agy`) | — | Non précisé |
+| JetBrains (AI Assistant, Junie) | — | ✓ | ✓ (Junie CLI) | — | Non précisé |
+| Mistral Vibe | — | ✓ (VS Code) | ✓ | ✓ | Non précisé |
+| OpenCode | ✓ (bêta) | — | ✓ | — | MIT |
+| Cline | ✓ | ✓ | ✓ | — | Apache-2.0 |
+| Kilo Code | — | ✓ | ✓ | ✓ | MIT |
+
+### Les mêmes concepts, sous des noms et des chemins différents
+
+Les chemins ci-dessous sont ceux de la documentation officielle consultée en octobre 2026. Ils changent : retenez la logique, vérifiez les noms dans la documentation.
+
+| Outil | Contexte projet | Skills | Hooks | MCP | Plugins | Subagents |
+|---|---|---|---|---|---|---|
+| Claude Code | `CLAUDE.md` (`AGENTS.md` en son absence) | `.claude/skills/` | `.claude/settings.json` | `.mcp.json` | `.claude-plugin/` | Oui |
+| GitHub Copilot | `.github/copilot-instructions.md`, `AGENTS.md` | `.github/skills/`, `.agents/skills/`, `.claude/skills/` | `.github/hooks/*.json` | `.vscode/mcp.json`, `~/.copilot/mcp-config.json` | Agent Plugins | `.github/agents/` |
+| Codex | `AGENTS.md` | `.agents/skills/` | `hooks.json`, `config.toml` | `config.toml` | `.codex-plugin/` (pas dans l'extension IDE) | `.codex/agents/*.toml` |
+| Cursor | `.cursor/rules/` (`.mdc`), `AGENTS.md` | `.cursor/skills/`, `.agents/skills/` | `.cursor/hooks.json` | `.cursor/mcp.json` | `.cursor-plugin/`, Agent Plugins | `.cursor/agents/` |
+| Devin | `AGENTS.md`, `.devin/rules/` | `.devin/skills/`, `.agents/skills/` | `.devin/hooks.v1.json` | `.devin/mcp_config.json` | `.devin-plugin/` | `.devin/agents/` |
+| Zed | Premier fichier trouvé dans une liste (`.rules`, `AGENTS.md`, `CLAUDE.md`…) | `.agents/skills/` | Non trouvé | `context_servers` (paramètres) | Extensions (autre notion) | Outil `spawn_agent` |
+| OpenCode | `AGENTS.md` (repli sur `CLAUDE.md`) | `.opencode/skills/`, `.agents/skills/`, `.claude/skills/` | Via les plugins | Clé `mcp` dans `opencode.json` | Modules JS/TS, npm | `.opencode/agents/` |
+| Antigravity | `GEMINI.md`, `AGENTS.md` | `.agents/skills/` | Oui (hooks de cycle de vie) | `.agents/mcp_config.json` | Plugins | Oui |
+
+### Ce que cela change pour vous
+
+Les compétences se transfèrent d'un outil à l'autre. Un fichier de contexte, des skills, des hooks, des serveurs MCP, des plugins et des subagents existent dans la quasi-totalité des outils cités, et ce que vous avez appris au Chapitre 3 s'applique partout. Les différences portent surtout sur les noms et les emplacements.
+
+Les outils se lisent d'ailleurs entre eux : `AGENTS.md` et le dossier `.agents/skills/` sont reconnus par la plupart d'entre eux, et plusieurs outils chargent aussi les fichiers de Claude Code (`.claude/skills/`, `CLAUDE.md`). C'est ce qui rend un socle portable (voir 4.4) réaliste.
 
 ---
 
-## 4.5 Enjeux enterprise
+## 4.6 Choisir : quelques règles pratiques
 
-### Confidentialité du code
+Il n'y a pas de bon choix universel. Le bon outil dépend du contexte, et les règles ci-dessous portent sur la forme d'usage et le cadre contractuel plutôt que sur un produit.
 
-C'est la première question que pose une DSI. Les niveaux de garantie varient selon l'offre :
+| Critère | À privilégier | Exemples |
+|---|---|---|
+| Le client a une politique stricte sur les outils | L'offre validée par sa DSI, avec les garanties contractuelles sur les données (voir 4.8) | Les offres professionnelles des outils ci-dessus |
+| Exploration ou formation, hors code client | Une offre individuelle d'entrée de gamme, ou un outil open source avec votre propre clé de modèle | OpenCode, Cline, Kilo Code |
+| Workflow agentic complexe (migration, refacto large) | Un agent en terminal | Claude Code, Codex CLI, Copilot CLI, Devin CLI, Cursor CLI, OpenCode |
+| Migrer vers un IDE natif IA | Un IDE conçu autour de l'IA | Cursor, Devin Desktop, Zed, Antigravity |
+| L'équipe travaille dans l'écosystème JetBrains | Les outils intégrés à ces IDE | AI Assistant, Junie |
+| Neutralité vis-à-vis du fournisseur de modèle | Un outil qui accepte vos propres clés | OpenCode, Cline, Kilo Code |
+| Souveraineté | Des modèles à poids ouverts, auto-hébergés ou utilisés via un outil compatible | Mistral Vibe, OpenCode avec des modèles locaux |
+| Équipe qui utilise plusieurs outils | Des formats portables, versionnés dans le dépôt | `AGENTS.md`, Agent Skills, MCP |
 
-- **Copilot Free / Business** : le code est potentiellement utilisé pour améliorer les modèles (selon les paramètres de l'organisation)
-- **Copilot Enterprise** : garantie contractuelle que le code n'est pas utilisé pour l'entraînement. C'est la réponse aux contraintes de confidentialité standard.
-- **Azure OpenAI Service** : traitement garanti dans les datacenters de la région configurée. Pour les exigences de data residency EU.
-- **Déploiement on-premise** : aucune donnée ne sort de l'infrastructure. Pour les exigences maximales.
-- **Mistral open source** : modèle déployé sur infrastructure propre, auditable.
+---
+
+## 4.7 Offres et conditions : où vérifier, quoi vérifier
+
+Les offres changent plus vite que tout le reste. Plutôt que de les décrire, cette section donne les repères qui durent et renvoie vers les pages officielles.
+
+### Les types d'offre
+
+On retrouve presque toujours les mêmes catégories : une offre **individuelle** (gratuite ou payante), une offre **équipe**, une offre **entreprise**, et un accès par **clé d'API** ou via un fournisseur cloud. Elles diffèrent surtout par :
+
+- les **limites d'usage** et leur mode de décompte (crédits, requêtes, tokens, quota hebdomadaire). Plusieurs outils ont changé de mode de facturation en quelques mois ;
+- les **modèles accessibles** ;
+- les **conditions sur les données** (entraînement, rétention, voir 4.8) ;
+- les **contrôles d'administration** (SSO, politiques, journaux d'audit).
+
+### Les conditions d'utilisation comptent autant que le prix
+
+Une offre peut être gratuite et assortie de conditions qui la rendent inutilisable en mission. Un exemple : les conditions d'Antigravity interdisent d'utiliser un compte Antigravity avec des logiciels tiers, et citent nommément Claude Code et OpenCode. Les offres « gratuites » sont aussi les premières à disparaître : l'accès individuel gratuit de Gemini CLI a pris fin en juin 2026 au profit d'Antigravity.
+
+### Où vérifier
+
+| Outil | Offres et limites | Données et sécurité |
+|---|---|---|
+| GitHub Copilot | [Plans Copilot](https://docs.github.com/en/copilot/get-started/plans) | [FAQ Copilot](https://github.com/features/copilot) |
+| Claude Code | [Tarifs Claude](https://claude.com/pricing) | [Usage des données](https://code.claude.com/docs/en/data-usage) |
+| Codex | [Documentation Codex](https://learn.chatgpt.com/docs) (page tarifs) | [Documentation Codex](https://learn.chatgpt.com/docs) |
+| Cursor | [Tarifs Cursor](https://cursor.com/pricing) | [Sécurité](https://cursor.com/security) et [usage des données](https://cursor.com/data-use) |
+| Antigravity | [Plans Antigravity](https://antigravity.google/docs/plans/) | [FAQ Antigravity](https://antigravity.google/docs/faq/) |
+| Devin | [Documentation Devin](https://docs.devin.ai) | [Documentation Devin](https://docs.devin.ai) |
+| Mistral Vibe | [Vibe](https://mistral.ai/products/vibe) | [Documentation Mistral](https://docs.mistral.ai/) |
+| Azure (modèles OpenAI) | [Types de déploiement](https://learn.microsoft.com/azure/ai-foundry/foundry-models/concepts/deployment-types) | [Données et confidentialité](https://learn.microsoft.com/legal/cognitive-services/openai/data-privacy) |
+
+### Avant d'adopter un outil pour une équipe
+
+1. Quelle offre exactement (individuelle, équipe, entreprise) et quelles sont ses limites d'usage ?
+2. Les données envoyées servent-elles à entraîner des modèles ? Combien de temps sont-elles conservées ?
+3. Où le code est-il traité (région, zone de données) ?
+4. L'offre est-elle compatible avec la politique du client ?
+5. Les conditions d'utilisation autorisent-elles l'usage prévu (CI, outils tiers, comptes partagés) ?
+6. Quelles garanties sur la propriété intellectuelle du code généré ?
+7. Quels contrôles d'administration (SSO, journaux, restriction de modèles) ?
+8. Que se passe-t-il si l'offre change : la configuration de l'équipe est-elle portable ?
+
+---
+
+## 4.8 Données, confidentialité et licences
+
+### Qui voit quoi, selon la forme d'usage
+
+- **Extension ou agent en terminal** : le code est lu localement, mais la partie envoyée au modèle (fichiers lus, historique, prompt) part chez le fournisseur du modèle.
+- **Agent cloud** : le dépôt est cloné sur l'infrastructure du fournisseur, qui exécute l'agent dans une machine virtuelle ou un bac à sable.
+- **Modèle auto-hébergé** : rien ne sort de l'infrastructure de l'organisation.
+
+### Entraînement et rétention selon le type de compte
+
+Les garanties dépendent du **type de compte**, pas seulement de l'outil :
+
+| Offre | Entraînement sur vos données | À savoir |
+|---|---|---|
+| Copilot Free, Pro, Pro+ | Possible, désactivable dans les paramètres | |
+| Copilot Business, Enterprise | Non, d'après GitHub | Données traitées sous le cadre contractuel de protection des données de GitHub |
+| Claude Code, comptes grand public (Free, Pro, Max) | Selon un réglage du compte | Rétention de 5 ans si l'utilisation est autorisée, 30 jours sinon |
+| Claude Code, offres commerciales (Team, Enterprise, API) | Non, sauf programme dédié | Rétention standard de 30 jours ; rétention zéro sur demande pour certaines offres Enterprise |
+| Cursor, Privacy Mode activé | Non | Accords de rétention zéro avec les fournisseurs de modèles, vérifications d'abus possibles |
+| Cursor, sans Privacy Mode | Possible | Les données peuvent servir à améliorer et entraîner les modèles |
+| Azure (modèles OpenAI) | Non | Stockage au repos dans la géographie choisie. Traitement dans la région choisie (Standard), la zone de données UE (Data Zone) ou toute région (Global) |
+| Modèle à poids ouverts auto-hébergé | Sans objet | Aucune donnée ne sort ; licence du modèle à vérifier |
+
+### Les trois sens du mot « licence »
+
+Le mot recouvre trois réalités à ne pas confondre :
+
+1. **La licence de l'outil lui-même.** Open source (Codex CLI est sous licence Apache-2.0), propriétaire (le dépôt public de Claude Code est publié « tous droits réservés »), ou propriétaire consultable (le code de Copilot CLI est visible, mais sa licence interdit de le modifier). Un dépôt public n'est pas un dépôt open source.
+2. **Le code généré et les garanties de propriété intellectuelle.** Les plans individuels de Copilot n'incluent pas de garantie d'indemnisation en cas de litige sur la propriété intellectuelle. Pour les offres professionnelles, vérifiez dans le contrat si une garantie existe. Les outils peuvent aussi filtrer les suggestions qui correspondent à du code public (Copilot compare à partir d'environ 65 lexèmes).
+3. **La licence des modèles.** Un modèle à poids ouverts n'est pas pour autant libre de droits : la licence peut limiter l'usage commercial (voir Chapitre 1).
+
+### Contrôles d'entreprise
+
+Les offres professionnelles ajoutent des contrôles qui comptent pour une DSI : exclusion de contenus sensibles (Copilot Business et Enterprise), réglages de confidentialité imposés à l'équipe (Cursor), restriction des modèles et des outils autorisés (Claude Code en configuration managée, contrôles d'accès par dépôt, modèle et MCP chez Cursor Enterprise).
 
 ### Licences et shadow IT
 
@@ -269,49 +416,51 @@ Ce que ça implique en pratique :
 
 ## ✅ Quiz — Chapitre 4
 
+_10 questions — environ 10 minutes_
+
 ---
 
-**Question 1.** Quelle est la différence architecturale principale entre un assistant in-IDE et un IDE full IA ?
+**Question 1.** Parmi ces affirmations sur les formes d'usage des outils IA, laquelle est exacte ?
 
-- A) Un IDE full IA supporte plus de langages de programmation
-- B) Un IDE full IA indexe la codebase nativement pour donner un contexte projet au modèle sans configuration manuelle ; un assistant in-IDE s'intègre dans un éditeur existant
-- C) Un assistant in-IDE est plus rapide car il n'indexe pas la codebase
-- D) Un IDE full IA fonctionne uniquement en mode agent, pas en complétion
+- A) Un même outil peut se présenter sous plusieurs formes : GitHub Copilot existe par exemple en extension d'IDE, en agent en terminal et en agent cloud
+- B) Un IDE natif IA est une extension à installer dans VS Code
+- C) Un agent en terminal ne peut pas modifier plusieurs fichiers
+- D) Un agent cloud s'exécute toujours sur le poste du développeur
 
-> ✅ **Réponse : B** — La distinction fondamentale est architecturale : l'IDE full IA est conçu nativement autour de la compréhension de projet, l'assistant in-IDE l'ajoute par-dessus un éditeur existant. Cela impacte la fluidité sur les tâches multi-fichiers et le coût de configuration.
+> ✅ **Réponse : A** — Les outils se classent moins par famille que par forme d'usage, et la plupart en proposent plusieurs. B est faux : un IDE natif IA est un éditeur à part entière. C est faux : les agents en terminal sont justement faits pour les tâches multi-fichiers. D est faux : un agent cloud s'exécute sur l'infrastructure du fournisseur, ce qui pose la question des données.
 
 ---
 
 **Question 2.** Un développeur en mission sur une codebase TypeScript volumineuse veut effectuer une migration d'une bibliothèque vers une autre sur 150 fichiers. Quel type d'outil est le plus adapté ?
 
-- A) Un assistant in-IDE en mode complétion inline
-- B) Un agent CLI (Claude Code, Codex CLI, Gemini CLI, Copilot CLI...), capable de lire l'ensemble du projet et de planifier la migration
-- C) Un IDE full IA uniquement — les agents CLI ne peuvent pas traiter autant de fichiers
-- D) Un outil de refacto statique, l'IA n'est pas adaptée à ce type de tâche
+- A) Un assistant en complétion inline
+- B) Un outil de refacto statique, l'IA n'est pas adaptée à ce type de tâche
+- C) Un IDE natif IA uniquement : les agents en terminal ne peuvent pas traiter autant de fichiers
+- D) Un agent capable de lire l'ensemble du projet et de planifier la migration, comme un agent en terminal (Claude Code, Codex CLI, Copilot CLI, OpenCode…)
 
-> ✅ **Réponse : B** — Une migration sur 150 fichiers est exactement le cas d'usage où un agent CLI apporte le plus, quel que soit l'éditeur : il lit le projet, planifie les modifications, exécute et itère. Claude Code, Codex CLI, Gemini CLI ou même Copilot CLI (désormais disponible en terminal) sont tous valables ici. Le mode agent de Cursor le serait également.
-
----
-
-**Question 3.** Quel est le rôle du fichier `CLAUDE.md` dans un projet ?
-
-- A) Stocker les clés API de Claude Code
-- B) Définir les règles de linting spécifiques à Claude Code
-- C) Fournir un contexte projet permanent injecté avant chaque échange avec Claude Code
-- D) Configurer les serveurs MCP du projet
-
-> ✅ **Réponse : C** — `CLAUDE.md` est le fichier de contexte projet de Claude Code : stack, conventions, patterns, contraintes. Il est injecté automatiquement avant chaque échange, évitant de répéter le contexte dans chaque prompt.
+> ✅ **Réponse : D** — Une migration sur 150 fichiers est exactement le cas d'usage où un agent apporte le plus : il lit le projet, planifie les modifications, exécute et itère. Le mode agent d'un IDE natif IA convient aussi, mais ce n'est pas le seul choix. A ne couvre pas la tâche, B est faux, et C affirme à tort une limite des agents en terminal.
 
 ---
 
-**Question 4.** Quel serveur MCP permettrait à un agent de ne pas halluciner sur les APIs d'une bibliothèque dont la documentation a évolué depuis l'entraînement du modèle ?
+**Question 3.** Avec Claude Code, comment partager avec l'équipe, via git, la configuration d'un serveur MCP propre au projet ?
+
+- A) Dans `~/.claude.json`, le fichier personnel de l'utilisateur
+- B) Dans `.claude/settings.json`, qui contient les définitions de serveurs
+- C) Dans un fichier `.mcp.json` à la racine du projet, committé (par exemple avec `claude mcp add --scope project`)
+- D) Dans le README du projet, que chacun recopie à la main
+
+> ✅ **Réponse : C** — Le fichier `.mcp.json` du projet est fait pour être partagé via git. A est un emplacement personnel, non partagé. B est faux : `.claude/settings.json` ne contient pas les définitions de serveurs, seulement des approbations. D reproduit la duplication que MCP cherche à éviter.
+
+---
+
+**Question 4.** Quel serveur MCP permettrait à un agent de limiter les hallucinations sur les APIs d'une bibliothèque dont la documentation a évolué depuis l'entraînement du modèle ?
 
 - A) `github` — pour accéder au code source de la bibliothèque
-- B) `playwright` — pour naviguer sur le site de documentation
-- C) `context7` — pour accéder à la documentation à jour des librairies
+- B) `context7` — pour accéder à la documentation de librairies à jour
+- C) `playwright` — pour naviguer sur le site de documentation
 - D) `fetch` — pour faire une requête HTTP sur la documentation
 
-> ✅ **Réponse : C** — Context7 est un serveur MCP spécialisé dans la fourniture de documentation de librairies à jour. Il résout directement le problème d'hallucination sur des APIs dont le comportement a changé après la date d'entraînement du modèle.
+> ✅ **Réponse : B** — Context7 fournit à l'agent de la documentation de librairies à jour et par version, ce qui réduit le risque d'API inventée ou périmée. Il ne le supprime pas : cette documentation est alimentée par la communauté, et son exactitude n'est pas garantie. `fetch` (D) et `playwright` (C) permettent de lire une page, mais sans organiser la documentation par bibliothèque et par version. `github` (A) donne le code source, pas la documentation.
 
 ---
 
@@ -319,40 +468,62 @@ Ce que ça implique en pratique :
 
 - A) Claude Code n'est pas autorisé en contexte professionnel
 - B) La performance de Claude Code est réduite sur les comptes personnels
-- C) C'est du shadow IT : code propriétaire du client dans un service non validé, licence hors périmètre de l'organisation
-- D) Il n'y a pas de problème si le développeur fait attention à ne pas coller de données sensibles
+- C) Il n'y a pas de problème si le développeur fait attention à ne pas coller de données sensibles
+- D) C'est du shadow IT : code propriétaire du client dans un service non validé, avec des conditions (entraînement, rétention) qui diffèrent de celles d'une offre professionnelle
 
-> ✅ **Réponse : C** — Utiliser un compte personnel sur du code client est du shadow IT indépendamment des précautions prises. La politique de rétention des données, la conformité des licences et la visibilité de l'organisation ne sont pas assurées.
-
----
-
-**Question 6.** Pour une équipe dont le client a une politique DSI stricte sur les outils de développement, quel outil est le plus adapté ?
-
-- A) Claude Code. Parce qu'il est le plus performant sur les tâches agentic
-- B) Cursor. Parce que la compréhension projet est native
-- C) Copilot Enterprise. Parce que les garanties de confidentialité et la gestion enterprise sont les plus matures
-- D) Gemini CLI. Parce qu'il est gratuit et ne nécessite pas de validation DSI
-
-> ✅ **Réponse : C** — Copilot Enterprise est conçu pour les contraintes enterprise : garantie contractuelle sur la confidentialité, gestion centralisée des licences, SSO, politiques de données. C'est la réponse standard aux exigences DSI strictes.
+> ✅ **Réponse : D** — Utiliser un compte personnel sur du code client est du shadow IT indépendamment des précautions prises. Les garanties dépendent du type de compte : sur un compte grand public, l'entraînement peut dépendre d'un réglage et la rétention être plus longue que sur une offre commerciale. La politique de l'organisation cliente n'est pas respectée et rien ne la rend visible.
 
 ---
 
-**Question 7.** Quel est l'avantage principal du plan gratuit de Gemini CLI pour un contexte de formation ?
+**Question 6.** Un client exige que le code de la mission ne soit pas utilisé pour entraîner des modèles. Quelle option est cohérente avec cette exigence ?
 
-- A) Il n'a aucune limitation de context window
-- B) Il offre un quota généreux (60 req/min, 1 000/jour) avec une context window de 1M tokens, sans engagement financier
-- C) Il est le seul outil IA gratuit disponible pour les développeurs
-- D) Il est intégré nativement dans VS Code sans configuration
+- A) Copilot Free, avec les paramètres par défaut
+- B) Copilot Business ou Enterprise, pour lesquels GitHub indique ne pas utiliser les données pour l'entraînement
+- C) Un compte individuel gratuit, quel que soit l'outil
+- D) N'importe quel outil, à condition de ne pas coller de données sensibles
 
-> ✅ **Réponse : B** — Le plan gratuit de Gemini CLI est particulièrement généreux pour de l'exploration et de la formation : quota élevé, context window très large, sans carte de crédit. C'est un point d'entrée accessible pour apprendre les patterns agentic.
+> ✅ **Réponse : B** — Les garanties dépendent du type de compte : sur les plans individuels de Copilot, les interactions peuvent servir à l'entraînement (désactivable), alors que Business et Enterprise sont exclus de cet usage selon GitHub. Les comptes gratuits individuels (A, C) n'offrent pas ce cadre. D déplace la responsabilité sur le développeur et ne répond pas à l'exigence du client.
+
+---
+
+**Question 7.** Les offres, les noms et les produits des outils IA changent vite. Quelle pratique limite le plus le risque de dépendre d'un outil précis ?
+
+- A) Garder le contexte, les skills et la configuration MCP dans des formats portables, versionnés dans le dépôt (`AGENTS.md`, Agent Skills, MCP)
+- B) Choisir l'outil le plus utilisé du moment
+- C) Ne conserver la configuration que dans les paramètres personnels de chaque développeur
+- D) Attendre que les offres se stabilisent avant d'utiliser un outil
+
+> ✅ **Réponse : A** — Des formats communs, versionnés avec le code, permettent de changer d'outil sans refaire la configuration de l'équipe. B ne protège pas d'un changement d'offre : l'outil le plus utilisé peut lui aussi évoluer. C disperse la configuration et la rend impossible à partager. D n'est pas tenable face à un marché qui bouge en continu.
 
 ---
 
 **Question 8.** Un agent configure MCP avec le serveur `playwright`. Quelle capacité cela lui donne-t-il que la lecture des fichiers du projet ne permet pas ?
 
 - A) Exécuter du code TypeScript dans le navigateur
-- B) Naviguer dans l'application en cours d'exécution, observer l'état de l'UI et générer des tests e2e depuis ce qu'il observe
-- C) Déployer l'application sur un environnement de staging
+- B) Déployer l'application sur un environnement de staging
+- C) Naviguer dans l'application en cours d'exécution, observer l'état de l'UI et générer des tests e2e depuis ce qu'il observe
 - D) Accéder au code source des dépendances npm
 
-> ✅ **Réponse : B** — Playwright MCP donne à l'agent la capacité d'interagir avec une application en cours d'exécution comme le ferait un utilisateur : naviguer, cliquer, observer l'état, prendre des captures. Cela permet de générer des tests e2e basés sur le comportement réel de l'application.
+> ✅ **Réponse : C** — Playwright MCP donne à l'agent la capacité d'interagir avec une application en cours d'exécution comme le ferait un utilisateur : naviguer, cliquer, observer l'état, prendre des captures. Cela permet de générer des tests e2e basés sur le comportement réel de l'application.
+
+---
+
+**Question 9.** Un client vous demande si l'outil IA que vous utilisez est « open source ». Que devez-vous vérifier ?
+
+- A) Que son dépôt de code est public sur GitHub
+- B) La licence du code de l'outil lui-même, qui est distincte des conditions d'utilisation du service et de la licence des modèles
+- C) Que l'outil utilise un modèle à poids ouverts
+- D) Que l'outil est gratuit
+
+> ✅ **Réponse : B** — Le mot « licence » recouvre trois réalités : celle de l'outil, celle du code généré (garanties de propriété intellectuelle) et celle des modèles. Un dépôt public n'est pas forcément open source : celui de Claude Code est publié « tous droits réservés », celui de Copilot CLI est consultable mais ne peut pas être modifié, alors que Codex CLI est sous licence Apache-2.0. Utiliser un modèle à poids ouverts (C) ne dit rien sur la licence de l'outil, et la gratuité (D) non plus.
+
+---
+
+**Question 10.** Un collègue propose d'adopter pour toute l'équipe un outil parce que son offre gratuite est très généreuse. Quelle vérification est la plus importante avant de l'adopter ?
+
+- A) Le nombre de développeurs qui l'utilisent dans le monde
+- B) Le nom du modèle utilisé par défaut
+- C) Les conditions de l'offre : traitement des données (entraînement, rétention), conditions d'utilisation et pérennité de l'offre
+- D) Aucune : une offre gratuite est toujours acceptable tant qu'on ne l'utilise pas sur du code client
+
+> ✅ **Réponse : C** — Les garanties dépendent du type de compte, les conditions d'utilisation peuvent exclure certains usages, et les offres gratuites sont les premières à changer ou à disparaître (l'accès individuel gratuit de Gemini CLI a pris fin en juin 2026). La popularité (A) et le modèle par défaut (B) ne renseignent pas sur ces points. D est faux : la prudence ne s'arrête pas au code client, et les conditions comptent aussi pour une équipe qui expérimente.

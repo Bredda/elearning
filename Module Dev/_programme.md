@@ -57,12 +57,14 @@ Voici le plan affiné.
 
 ### Chapitre 4 — Panorama des outils (30 min)
 
-- Les deux familles : IDE full IA (Cursor, Windsurf, Zed) vs assistants in-IDE (Copilot, Claude Code, Gemini CLI)
-- Ce qui différencie les approches : gestion du contexte projet, autonomie, modèle sous-jacent
-- MCP : ce que c'est, pourquoi ça change quelque chose pour les agents, écosystème actuel
-- Matrice de choix : stack, contrainte enterprise, budget, cas d'usage
-- Enjeux enterprise : confidentialité du code, politique de rétention, licences, shadow IT
-- Pourquoi le module pratique se concentre sur Copilot — et comment transférer les compétences à d'autres outils
+- Les formes d'usage : IDE natif IA, extension d'éditeur, agent en terminal, agent cloud — un même outil en prend souvent plusieurs. Volatilité des offres et des produits
+- Les outils en détail : éditeur, ouverture du code, historique, formes d'usage, particularités ; alternatives open source ; usage déclaré par les développeurs
+- MCP : ce que c'est, pourquoi ça change quelque chose pour les agents, écosystème actuel, configuration selon l'outil
+- Plugins : une forme de packaging de la configuration d'un agent, et l'alternative d'un socle portable dans le dépôt
+- Comparatif visuel : formes d'usage par outil, mêmes concepts sous des noms différents (comment transférer les compétences d'un outil à l'autre)
+- Choisir : règles pratiques par critère (contrainte enterprise, cas d'usage, neutralité, souveraineté)
+- Offres et conditions : où vérifier, quoi vérifier (pas de tarifs dans le chapitre)
+- Données, confidentialité et licences : entraînement et rétention selon le type de compte, trois sens du mot « licence », contrôles d'entreprise, shadow IT
 - Quiz 5-10 questions
 
 ---

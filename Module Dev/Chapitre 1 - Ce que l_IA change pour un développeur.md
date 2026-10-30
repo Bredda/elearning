@@ -179,21 +179,23 @@ Un **subagent** est un agent secondaire, à contexte isolé et éventuellement �
 
 ### GPT — OpenAI
 
-Intégré dans GitHub Copilot, Azure OpenAI Service. OpenAI structure sa gamme en paliers de capacité nommés : **Astra** (le plus capable, le modèle de référence pour le raisonnement complexe et le code), **Sol** (une performance proche d'Astra à moindre coût), **Terra** (rapide et efficace, orienté raisonnement visuel et usage d'un poste de travail), **Luna** (le plus économique, pour les gros volumes de tâches ciblées).
+Intégré dans GitHub Copilot et disponible via Azure (Microsoft Foundry). OpenAI structure sa gamme en paliers de capacité nommés : **Astra** (le plus capable, le modèle de référence pour le raisonnement complexe et le code), **Sol** (une performance proche d'Astra à moindre coût), **Terra** (rapide et efficace, orienté raisonnement visuel et usage d'un poste de travail), **Luna** (le plus économique, pour les gros volumes de tâches ciblées).
 
 Le numéro identifie la génération (GPT-6, GPT-6.1), le nom identifie le palier, et les deux évoluent indépendamment : les paliers ne changent pas de génération en même temps (au moment de la rédaction, Astra et Luna sont en GPT-6, Sol et Terra en GPT-6.1).
 
 ### Claude — Anthropic
 
-La gamme s'organise en paliers : **Haiku** (rapide, économique), **Sonnet** (l'équilibre quotidien, le choix par défaut pour la plupart des tâches de dev), **Opus** (les tâches les plus longues et les plus exigeantes), et **Fable** (au-dessus d'Opus).
+La gamme s'organise en paliers : **Haiku** (le plus rapide, pour les gros volumes et les tâches à faible latence), **Sonnet** (le meilleur compromis entre vitesse et intelligence), **Opus** (les tâches agentiques de code longues, et le point de départ que recommande Anthropic pour la plupart des charges de travail), et **Fable** (au-dessus d'Opus, pour le raisonnement exigeant et les tâches agentiques de longue durée, au prix d'un coût et d'une latence plus élevés). Les quatre paliers de la génération actuelle offrent une context window de 1M tokens.
 
-Un palier **Mythos**, encore plus capable, existe mais reste à accès restreint. 
+Un palier **Mythos**, encore plus capable, est mentionné par Anthropic mais ne figure pas dans la gamme proposée publiquement.
 
 ### Gemini — Google DeepMind
 
 Intégration native dans Firebase, Google Cloud et l'écosystème Google. 
 
-Segmentation par palier : **Pro** (capacité maximale, raisonnement complexe), **Flash** (le workhorse — bon rapport coût/performance, taillé pour l'agentic et le développement logiciel), **Flash-Lite** (le plus économique, gros volumes). Dernière sortie notable pour le dev : **gemini-3.8-flash** (septembre 2026), qui progresse spécifiquement sur l'ingénierie logicielle longue durée et le raisonnement agentique multi-étapes.
+Jusqu'à la génération 3, la gamme est segmentée par palier : **Pro** (capacité maximale, raisonnement complexe), **Flash** (bon rapport coût/performance, taillé pour l'agentic et le développement logiciel), **Flash-Lite** (le plus économique, gros volumes). La génération 4 change de convention et utilise des noms propres : **Gemini 4 Argon**, publié à l'automne 2026, est le modèle phare de raisonnement, présenté pour l'ingénierie logicielle complexe et les agents autonomes. Un second modèle, **Carbon**, est annoncé.
+
+Côté modèle rapide, **Gemini 3.8 Flash** (septembre 2026) est, avec Gemini 3.5 Flash-Lite, celui que Google recommande pour les nouveaux projets. Il est conçu pour l'ingénierie logicielle longue durée et les agents autonomes.
 
 ### Mistral — Mistral AI
 
@@ -203,11 +205,11 @@ Mistral AI se distingue des autres acteurs de cette section par trois particular
 - **Des modèles à poids ouverts.** Les poids de plusieurs modèles sont téléchargeables, ce qui permet de les auto-héberger (on-premise ou sur une infrastructure souveraine) en plus de l'accès par API. « Poids ouverts » ne veut pas dire open source au sens strict, et les licences varient selon le modèle : Apache 2.0 pour Large 3, Small 4 et les Ministral 3, licences spécifiques pour Large 4 et Medium 3.5. À lire avant tout usage commercial.
 - **Une gamme organisée par taille.** **Large** (généraliste multimodal, le plus capable), **Medium** (orienté agentique et code), **Small** (hybride, qui réunit instruct, raisonnement et code dans un modèle léger), **Ministral** (petits modèles de 3B, 8B et 14B de paramètres) et **Codestral** (complétion de code).
 
-Cette gamme bouge vite : Devstral (agentic coding) et Magistral (raisonnement) figurent désormais parmi les modèles dépréciés, avec Medium 3.5 et Small 4 comme remplaçants.
+Cette gamme bouge vite : Devstral (agentic coding) et Magistral (raisonnement) ont été dépréciés puis retirés, avec Medium 3.5 et Small 4 comme remplaçants.
 
 L'intérêt principal : répondre aux contraintes de confidentialité ou de souveraineté qui excluent les fournisseurs cloud américains. L'hébergement effectif (API Mistral ou auto-hébergement) et la licence restent à valider modèle par modèle.
 
-> **Ce qui compte pour choisir un modèle :** la qualité sur le type de tâche (benchmark de code), la taille de la context window, les contraintes data client, et le coût par token. Pas le marketing.
+> **Ce qui compte pour choisir un modèle :** la qualité sur le type de tâche (benchmark de code), la taille de la context window, les contraintes data client, et le coût par token. Pas le marketing. Les noms de modèles et leurs paliers changent plusieurs fois par an : vérifiez toujours la page officielle du fournisseur.
 
 ---
 
