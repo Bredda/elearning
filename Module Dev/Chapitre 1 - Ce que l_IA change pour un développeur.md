@@ -26,7 +26,7 @@ C'est ce qui rend la **context window** (fenêtre contextuelle) si critique : c'
 
 ### Tokens
 
-Un LLM ne lit pas du texte, il lit des tokens. Un token correspond approximativement à ¾ d'un mot en français (les mots courants font souvent un token, les mots rares ou techniques peuvent en faire plusieurs).
+Un LLM ne manipule pas directement du texte, il lit des tokens. Un token correspond approximativement à ¾ d'un mot en français (les mots courants font souvent un token, les mots rares ou techniques peuvent en faire plusieurs).
 
 Ce que ça implique concrètement :
 
@@ -41,17 +41,21 @@ Ce que ça implique concrètement :
 
 ### Context window
 
-C'est la quantité totale de texte (ie. tokens) que le modèle peut traiter en une seule fois : prompt système + historique de conversation + instruction courante. Tout ce qui dépasse est **invisible** au modèle.
+C'est la quantité totale de texte (c.-à-d. en tokens) que le modèle peut traiter en une seule fois : prompt système + historique de conversation + instruction courante. Cette limite, spécifique à chaque modèle, est techniquement indépassable.
 
 Comme il n'y a pas de mémoire entre les appels, la context window est souvent chargée intentionnellement : historique de conversation, fichiers de code pertinents, documentation, exemples. Cette accumulation a un coût et une limite.
 
 Quelques repères :
 
-- GPT-5.6 : 400k tokens (~300 000 mots)
-- Claude Sonnet 5 : jusqu'à 1M tokens
-- gemini-3.8-flash : jusqu'à 1M tokens
+- GPT 3.5: 4 096 tokens
+- GPT 6 series : 1M tokens
+- Claude Sonnet 3.5 : 200 000 tokens
+- Claude Sonnet 5.5 : 1M tokens
+- GLM 5.2 : 1M tokens
 
-Plus la context window est grande, plus le modèle peut prendre en compte de contexte. Mais une fenêtre contextuelle plus grande n'est pas obligatoirement la panacée : si elle est surchargée, elle peut dégrader la qualité de l'attention sur les éléments importants (phénomène [lost in the middle](https://www.emergentmind.com/papers/2307.03172) par exemple).
+Après avoir fortement évolué depuis leurs premières versions, la plupart des modèles grand public sont stabilisés aujourd'hui autour de 1M de tokens.
+
+Plus la context window est grande, plus le modèle peut recevoir de contexte. Mais une fenêtre contextuelle plus grande n'est pas obligatoirement la panacée : si elle est surchargée, elle augmente le coût de la requête et le temps de réponse, et dégrade la qualité de l'attention sur les éléments importants (phénomène [lost in the middle](https://www.emergentmind.com/papers/2307.03172) par exemple), donc la qualité de la réponse.
 
 ![Context window](./assets/fig1.05.png "Context window")
 
@@ -69,6 +73,8 @@ En pratique pour un dev :
 - **Température basse** pour générer du code, des tests, des données structurées
 - **Température haute** pour brainstormer des solutions, générer des alternatives, rédiger de la documentation
 
+Aujourd'hui, la température a tendance à être remplacé au sein de certaines gammmes de modèle par un gestion de l'effort de reflexion (*thinking effort*), [NEED FINISHING SENTENCE, REPLACE BUT NOT SAME]
+
 ### Ce que le modèle fait vraiment
 
 Un LLM prédit le prochain token le plus probable étant donné tout ce qui précède. Il ne "comprend" pas le code au sens humain, il a appris des patterns statistiques sur des milliards de lignes de code.
@@ -81,7 +87,7 @@ Conséquence directe : le modèle peut produire du code syntaxiquement parfait q
 
 ## 1.3 Les briques d'intégration
 
-Un LLM seul a des limitations structurelles importantes. Comprendre ces limitations explique pourquoi l'écosystème autour des LLM s'est développé aussi rapidement.
+Un LLM seul a des limitations structurelles importantes. Comprendre ces limitations explique pourquoi et comment l'écosystème autour des LLM s'est développé aussi rapidement.
 
 ![Les briques d'intégration](./assets/fig1.06.png "Les briques d'intégration")
 
@@ -93,15 +99,15 @@ Si on l'interroge sur ces sujets sans lui fournir le contexte, il va soit répon
 
 **Limitation 2 : le modèle ne peut rien faire par lui-même.**
 
-Un LLM seul produit uniquement du texte. Il ne peut pas consulter une base de données, appeler une API, créer un fichier ou pousser un commit. Il est isolé de l'environnement.
+Un LLM produit uniquement du texte. Il ne peut pas consulter une base de données, appeler une API, créer un fichier ou pousser un commit. Il est isolé du monde.
 
-**Limitation 3 : l'agent redécouvre la même procédure à chaque fois.**
+**Limitation 3 : le modèle redécouvre la même procédure à chaque fois.**
 
-Un agent qui exécute une tâche récurrente (générer des tests selon vos conventions, faire une revue de PR selon votre checklist) repart de zéro à chaque session. Soit vous retapez le contexte à chaque fois, soit vous l'intégrez dans le fichier de contexte permanent — au risque de le saturer avec des procédures qui ne servent que ponctuellement.
+Un agent qui exécute une tâche récurrente (générer des tests selon vos conventions, faire une revue de PR selon votre checklist) repart de zéro à chaque session. Soit vous retapez le contexte à chaque fois, soit vous l'intégrez dans le fichier de contexte permanent, au risque de le saturer avec des procédures qui ne servent que ponctuellement.
 
-**Limitation 4 : l'agent reste probabiliste même sur ce qui devrait être garanti.**
+**Limitation 4 : le modèle reste probabiliste même sur ce qui devrait être garanti.**
 
-Demander à un agent de toujours lancer les tests après une modification, ou de ne jamais toucher aux fichiers de migration, fonctionne la plupart du temps. Mais une instruction dans un prompt ou un fichier de contexte reste une consigne que le modèle peut interpréter, oublier en session longue, ou déprioriser face à d'autres contraintes.
+Demander à un agent de toujours lancer les tests après une modification, ou de ne jamais toucher aux fichiers de migration, fonctionne la plupart du temps. Mais cette instruction dans un prompt ou un fichier de contexte reste une consigne que le modèle peut interpréter, oublier en session longue, ou déprioriser face à d'autres contraintes.
 
 Des techniques et outils répondent à ces limitations.
 
@@ -109,7 +115,7 @@ Des techniques et outils répondent à ces limitations.
 
 Réponse à la limitation 1 (connaissance).
 
-Plutôt que d'espérer que le modèle connaisse les bonnes réponses, on lui donne accès à une base de documents au moment où il en a besoin. Avant de répondre, il recherche les passages pertinents et construit sa réponse en s'appuyant dessus.
+Plutôt que d'espérer que le modèle connaisse les bonnes réponses, on lui donne accès à une base de documents au moment où il en a besoin. Avant de répondre, on recherche pour lui les passages pertinents et il construit sa réponse en s'appuyant dessus.
 
 ![Retrieval-Augmented Generation](./assets/fig.1.07.png "Retrieval-Augmented Generation")
 
@@ -121,7 +127,7 @@ Réponse à la limitation 2 (action). Ce mécanisme permet au LLM de demander l'
 
 ![Tool calling](./assets/fig.1.08.png "Tool calling")
 
-C'est la brique de base qui rend les agents possibles.
+C'est la brique de base du fonctionnement agentique.
 
 ### Agents et systèmes agentiques
 
@@ -143,17 +149,17 @@ Standard ouvert (initié par Anthropic et cédé à l'Agentic AI Foundation en d
 
 Avant MCP : connecter un agent à GitHub + Jira + une BDD = trois intégrations sur mesure à développer et maintenir. Avec MCP : un agent compatible se branche sur tous les outils qui supportent le protocole.
 
-L'écosystème MCP couvre aujourd'hui GitHub, Jira, Atlassian, Salesforce, Playwright, des dizaines de bases de données, et des centaines d'autres connecteurs.
+L'écosystème MCP couvre aujourd'hui GitHub, Jira, Atlassian, Salesforce, Playwright, des dizaines de bases de données, et des milliers d'autres connecteurs.
 
 ### Skills — le savoir-faire à la demande
 
-Réponse à la limitation 3 : une **skill** est un paquet d'instructions (et éventuellement de scripts ou de ressources) qui documente une procédure précise. L'agent la charge seulement quand la tâche en cours en a besoin, pas en permanence. Concrètement, un fichier `SKILL.md` dans un dossier `skills/`, invocable en commande explicite (`/generate-tests`) ou déclenché automatiquement quand l'agent détecte que la tâche correspond.
+Réponse à la limitation 3 : une **skill** est un paquet d'instructions (et éventuellement de scripts ou de ressources) qui documente une procédure précise. L'agent la charge seulement quand la tâche en cours en a besoin, pas en permanence. Concrètement, un fichier `SKILL.md` dans un dossier `skills/`, invocable en commande explicite ou déclenché automatiquement quand l'agent détecte que la tâche correspond.
 
 C'est la même logique que le fichier de contexte projet (Chapitre 3) mais appliquée à des procédures ponctuelles plutôt qu'à des règles permanentes : le fichier de contexte dit "voici comment ce projet fonctionne", une skill dit "voici comment faire cette tâche précise, quand elle se présente".
 
 ### Hooks — l'automatisation déterministe
 
-Réponse à la limitation 4 : un **hook** est un script (commande shell, appel HTTP, appel d'outil MCP) déclenché automatiquement par l'application à un point précis du cycle de vie de l'agent — avant qu'il modifie un fichier, après qu'il termine une session, avant qu'il exécute une commande. Contrairement à une instruction dans un prompt, un hook s'exécute systématiquement : ce n'est plus une probabilité, c'est du code.
+Réponse à la limitation 4 : un **hook** est un script (commande shell, appel HTTP, appel d'outil MCP, ...) déclenché automatiquement par l'application à un point précis du cycle de vie de l'agent — avant qu'il modifie un fichier, après qu'il termine une session, avant qu'il exécute une commande. Contrairement à une instruction dans un prompt, un hook s'exécute systématiquement : ce n'est plus une probabilité, c'est du code.
 
 Exemple : un hook post-édition qui relance automatiquement la suite de tests dès qu'un fichier source est modifié, sans dépendre du fait que l'agent "pense" à le faire.
 
@@ -170,21 +176,29 @@ Une fois skills, hooks, tool calling et MCP disponibles, deux niveaux de composi
 
 ### GPT — OpenAI
 
-Intégré dans GitHub Copilot, Azure OpenAI Service. Depuis l'été 2026, OpenAI structure sa gamme en paliers de capacité nommés, indépendants du numéro de génération : **Sol** (le plus capable), **Terra** (l'équilibre courant), **Luna** (rapide et économique, gros volumes). Le chiffre identifie la génération (GPT-5.6, puis GPT-6), le nom identifie le palier — les deux évoluent indépendamment. Variante à connaître pour le dev : les déclinaisons **Codex**, entraînées spécifiquement sur la génération de code et l'exécution agentic longue durée.
+Intégré dans GitHub Copilot, Azure OpenAI Service. Depuis l'été 2026, OpenAI structure sa gamme en paliers de capacité nommés, indépendants du numéro de génération : **Sol** (le plus capable), **Terra** (l'équilibre courant), **Luna** (rapide et économique, gros volumes). 
+
+Le chiffre identifie la génération (GPT-5.6, puis GPT-6), le nom identifie le palier — les deux évoluent indépendamment.
 
 ### Claude — Anthropic
 
-Performances élevées sur les tâches de code long et de refacto complexe, context window large (jusqu'à 1M tokens sur Sonnet). La gamme s'organise en paliers : **Haiku** (rapide, économique), **Sonnet** (l'équilibre quotidien, le choix par défaut pour la plupart des tâches de dev), **Opus** (les tâches les plus longues et les plus exigeantes), et **Fable** (au-dessus d'Opus, avec des garde-fous renforcés sur les usages à haut risque type cybersécurité/bio). Un palier **Mythos**, encore plus capable, existe mais reste à accès restreint. **Claude Code** est l'outil agentic natif: il lit le projet, planifie, exécute, itère. Nécessite un abonnement payant (Pro minimum) — pas de plan gratuit dédié, contrairement au chat claude.ai.
+La gamme s'organise en paliers : **Haiku** (rapide, économique), **Sonnet** (l'équilibre quotidien, le choix par défaut pour la plupart des tâches de dev), **Opus** (les tâches les plus longues et les plus exigeantes), et **Fable** (au-dessus d'Opus).
+
+Un palier **Mythos**, encore plus capable, existe mais reste à accès restreint. 
 
 ### Gemini — Google DeepMind
 
-Context window très large (jusqu'à 1M tokens en tête de gamme). Intégration native dans Firebase, Google Cloud et l'écosystème Google. Segmentation par palier : **Pro** (capacité maximale, raisonnement complexe), **Flash** (le workhorse — bon rapport coût/performance, taillé pour l'agentic et le développement logiciel), **Flash-Lite** (le plus économique, gros volumes). Dernière sortie notable pour le dev : **gemini-3.8-flash** (septembre 2026), qui progresse spécifiquement sur l'ingénierie logicielle longue durée et le raisonnement agentique multi-étapes. **Gemini CLI** est gratuit avec un quota généreux, un bon point d'entrée.
+Intégration native dans Firebase, Google Cloud et l'écosystème Google. 
+
+Segmentation par palier : **Pro** (capacité maximale, raisonnement complexe), **Flash** (le workhorse — bon rapport coût/performance, taillé pour l'agentic et le développement logiciel), **Flash-Lite** (le plus économique, gros volumes). Dernière sortie notable pour le dev : **gemini-3.8-flash** (septembre 2026), qui progresse spécifiquement sur l'ingénierie logicielle longue durée et le raisonnement agentique multi-étapes.
 
 ### Mistral — Mistral AI 🇫🇷
 
-Modèles disponibles en open source ou via API, déployables on-premise ou sur infrastructure souveraine. Gamme structurée par taille et par usage : **Large** (le flagship, raisonnement et tâches agentiques les plus exigeantes), **Medium** (bon compromis coût/performance sur le code et l'agentique), **Codestral** (spécialisé code, large context window), et **Devstral** (taillé pour l'agentic coding, conçu pour tourner dans des scaffolds d'agents comme Claude Code ou Codex CLI). Pertinent quand les contraintes de confidentialité excluent les providers cloud américains.
+Modèles disponibles en open source ou via API, déployables on-premise ou sur infrastructure souveraine. 
 
-**Ce qui compte pour choisir un modèle :** la qualité sur le type de tâche (benchmark de code), la taille de la context window, les contraintes data client, et le coût par token. Pas le marketing.
+Gamme structurée par taille et par usage : **Large** (le flagship, raisonnement et tâches agentiques les plus exigeantes), **Medium** (bon compromis coût/performance sur le code et l'agentique), **Codestral** (spécialisé code, large context window), et **Devstral** (taillé pour l'agentic coding, conçu pour tourner dans des scaffolds d'agents comme Claude Code ou Codex CLI). Pertinent quand les contraintes de confidentialité excluent les providers cloud américains.
+
+> **Ce qui compte pour choisir un modèle :** la qualité sur le type de tâche (benchmark de code), la taille de la context window, les contraintes data client, et le coût par token. Pas le marketing.
 
 ---
 
@@ -233,17 +247,17 @@ Le critère qui bascule le vibe coding en risque n'est donc pas le mode de gén�
 Collaborer de façon structurée avec l'IA, tout en restant aux commandes. Le dev délègue l'exécution, pas la décision.
 
 ```
-SPECIFY  →  Définir précisément la tâche, les contraintes, le contexte
-PLAN     →  Faire proposer un plan par le modèle, le valider avant d'exécuter
+SPECIFY   →  Définir précisément la tâche, les contraintes, le contexte
+PLAN      →  Faire proposer un plan par le modèle, le valider avant d'exécuter
 IMPLEMENT →  L'IA génère, le dev suit et intervient si nécessaire
-VALIDATE →  Review du code produit, tests, vérification de la logique
+VALIDATE  →  Review du code produit, tests, vérification de la logique
 ```
 
 Sur des tâches simples et bien bornées, la validation prend quelques secondes. Sur des tâches complexes, elle évite de passer des heures à déboguer du code qu'on n'a pas écrit.
 
 ### Le spectre entre les deux
 
-Ce n'est pas un binaire. Un développeur expérimenté peut naviguer entre les deux selon le contexte :
+Ce n'est pas un choix binaire. Un développeur expérimenté peut naviguer entre les deux selon le contexte :
 
 - **Autocomplétion courte** → acceptance rapide sans review approfondie est acceptable
 - **Exploration d'une feature** → vibe coding rapide pour confronter l'idée au besoin
@@ -297,7 +311,7 @@ Script (commande shell, appel HTTP, appel d'outil MCP) déclenché automatiqueme
 Protocole standard initié par Anthropic (puis cédé à l'Agentic AI Foundation, aux côtés d'AGENTS.md), et massivement adopté par l'industrie. Permet à un agent de se connecter à des outils externes (GitHub, Jira, BDD…) sans développement spécifique pour chaque connexion.
 
 **On-premise**
-Déploiement d'un modèle sur l'infrastructure propre de l'organisation. Aucune donnée ne sort du périmètre. Requis pour les contraintes de souveraineté maximales.
+Déploiement d'un modèle sur l'infrastructure propre de l'organisation. Aucune donnée ne sort du périmètre. Requis pour les contextes à contraintes de souveraineté maximales.
 
 **Plugin (agent plugin)**
 Unité versionnée qui empaquette skills, hooks, subagents et serveurs MCP, installable en une commande depuis un dépôt Git ou un marketplace. Permet de partager une configuration d'agent complète entre développeurs ou entre projets, plutôt qu'un simple fichier de contexte à copier-coller.
@@ -312,7 +326,7 @@ Architecture qui connecte un LLM à une base documentaire ou de code : avant de 
 Étape de recherche dans un système RAG : trouver les passages les plus pertinents dans la base pour répondre à une question donnée. La qualité du retrieval conditionne la qualité des réponses.
 
 **Skill (agent skill)**
-Paquet d'instructions (et éventuellement de scripts ou ressources) qui documente une procédure précise, chargé par l'agent à la demande plutôt qu'injecté en permanence dans le contexte. Concrètement, un fichier `SKILL.md`, invocable en commande ou déclenché automatiquement.
+Paquet d'instructions (et éventuellement de scripts ou ressources) qui documente une procédure précise, chargé par l'agent à la demande plutôt qu'injecté en permanence dans le contexte.
 
 **Structured output**
 Capacité du modèle à produire une réponse dans un format structuré (JSON, XML, schéma défini). Indispensable pour l'intégration dans des pipelines applicatifs.
