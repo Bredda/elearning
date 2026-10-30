@@ -1,10 +1,14 @@
 # Chapitre 5 — Workflows avancés et qualité
 
+---
+
 ## 5.1 Gérer le contexte sur de gros projets
 
-La context window est limitée. Sur un projet réel de quelques dizaines de milliers de lignes, il est impossible d'envoyer l'intégralité de la codebase à chaque échange. La question n'est pas "comment envoyer tout le projet" mais "comment envoyer le bon contexte au bon moment".
+Les context windows atteignent aujourd'hui 1M de tokens, ce qui ne règle pas le problème. Un projet de plusieurs dizaines de milliers de lignes occupe vite plusieurs centaines de milliers de tokens, et remplir la fenêtre coûte plus cher, ralentit les réponses et dégrade l'attention (Chapitre 1). La fenêtre disponible dans un outil est en plus souvent plus basse que le maximum du modèle.
 
-![Stratégies de gestion du contexte](./assets/fig5.02.png "Stratégies de gestion du contexteI")
+La question n'est donc pas "comment envoyer tout le projet" mais "comment orienter l'agent vers le bon contexte au bon moment". Un agent explore d'ailleurs lui-même le projet (recherche, lecture de fichiers) : votre rôle est de cadrer le périmètre et de lui donner des repères.
+
+![Stratégies de gestion du contexte](./assets/fig5.01.png "Stratégies de gestion du contexte")
 
 ### Le découpage des tâches
 
@@ -30,19 +34,40 @@ Priorité décroissante pour remplir la context window :
 2. **Les types et interfaces pertinents**. Le modèle doit connaître les contrats
 3. **Les fichiers qui appellent ou sont appelés par le fichier principal**. Pour la cohérence des interfaces
 4. **Les tests existants**. Pour comprendre les comportements attendus
-5. **Le fichier de contexte projet** (`CLAUDE.md`, `copilot-instructions.md`). Injecté automatiquement si configuré
+5. **Le fichier de contexte projet** (`AGENTS.md` ou le fichier propre à l'outil). Injecté automatiquement si configuré
 
 Ce qu'on n'envoie généralement pas : les fichiers utilitaires génériques, la configuration, les migrations, les assets.
 
+Avec un agent, une partie de ces éléments est lue par l'agent lui-même. Il reste utile de lui indiquer par où commencer et ce qu'il ne doit pas toucher.
+
+### Les techniques pour les gros projets
+
+- **Cadrer le périmètre.** Nommez les fichiers concernés et ceux à ne pas toucher, comme dans l'exemple ci-dessus.
+- **Un `AGENTS.md` par dossier dans un monorepo.** Les règles communes restent à la racine, les règles propres à un module vivent dans son dossier. Dans le standard `AGENTS.md`, les instructions du fichier le plus proche du fichier édité prennent le pas sur les autres.
+
+```
+monorepo/
+├── AGENTS.md                  ← règles communes à tout le dépôt
+└── packages/
+    ├── payments/
+    │   └── AGENTS.md          ← règles propres au module de paiement
+    └── orders/
+        └── AGENTS.md          ← règles propres au module de commande
+```
+
+- **Déléguer l'exploration à un subagent.** Il travaille dans un contexte isolé (Chapitre 1) et ne remonte à l'agent principal qu'un résumé, sans l'encombrer de tous les fichiers qu'il a lus.
+- **Repartir d'un contexte neuf** quand la conversation s'est alourdie (voir ci-dessous).
+- **Garder le fichier de contexte court.** Certains outils plafonnent la taille cumulée de ces fichiers (32 KiB par défaut pour Codex), et un fichier trop long dilue les instructions importantes (Chapitre 3).
+
 ### Saturation de la context window
 
-Quand la context window est surchargée, la qualité de l'attention du modèle se dégrade. Les symptômes :
+Quand la context window est surchargée, le coût et le temps de réponse augmentent (Chapitre 1), et la qualité de l'attention du modèle se dégrade. Les symptômes de qualité :
 
 - Le modèle ignore des contraintes spécifiées en début de prompt
 - Les réponses deviennent moins cohérentes avec le contexte
 - Le modèle "oublie" les conventions établies plus tôt dans la conversation
 
-Le remède : redémarrer la conversation avec un contexte recentré, plutôt que de continuer à accumuler dans le même fil.
+Le remède : redémarrer la conversation avec un contexte recentré (ou compacter l'historique quand l'outil le permet), plutôt que de continuer à accumuler dans le même fil.
 
 ---
 
@@ -64,11 +89,13 @@ Comprendre une codebase inconnue est l'une des tâches les plus consommatrices d
 4. Ce qui te semble être de la dette technique"
 ```
 
-Ce prompt produit en quelques secondes une carte de navigation dans un fichier qui aurait demandé 30 minutes de lecture attentive. Sur une migration ou une reprise de projet, l'économie de temps est substantielle.
+Ce prompt produit en quelques secondes une carte de navigation dans un fichier qu'il faudrait longtemps pour lire attentivement. Sur une migration ou une reprise de projet, l'économie de temps est substantielle.
+
+Point de vigilance : l'explication produite par le modèle reste une hypothèse. Avant de vous y fier pour modifier le code, vérifiez-la contre le code lui-même, ou avec des tests de caractérisation (des tests qui figent le comportement actuel).
 
 ### Génération de tests
 
-La génération de tests est le cas d'usage avec le meilleur rapport qualité/effort. Le modèle connaît les patterns de test, peut identifier les cas limites, et la validation est directe : un test qui passe ou échoue.
+La génération de tests est l'un des cas d'usage au meilleur rapport qualité/effort. Le modèle connaît les patterns de test, peut identifier les cas limites, et la validation est directe : un test qui passe ou échoue.
 
 ```
 "Génère les tests Vitest pour calculateRefund() ci-dessous.
@@ -87,7 +114,7 @@ Point de vigilance : un test généré teste le comportement tel qu'il est impl�
 
 ### Documentation
 
-La documentation est systématiquement la tâche la plus reportée en développement. L'IA en réduit le coût au point où elle peut être produite en continu plutôt qu'en rattrapage.
+La documentation est une tâche souvent reportée en développement. L'IA en réduit le coût au point où elle peut être produite en continu plutôt qu'en rattrapage.
 
 ```
 "Génère la documentation JSDoc pour les méthodes publiques de OrderService.ts.
@@ -98,6 +125,8 @@ Pour chaque méthode :
 - Les BusinessErrors possibles
 - Un exemple d'appel si la signature est complexe"
 ```
+
+Point de vigilance : une documentation générée décrit ce que le code fait, pas ce qu'il devrait faire. Si le code a un bug, la documentation le documente. Relisez les descriptions du comportement métier.
 
 ### Refacto assistée
 
@@ -119,7 +148,7 @@ Certaines tâches nécessitent une vigilance accrue, pas parce que l'IA ne peut 
 
 L'IA peut générer du code d'authentification syntaxiquement correct qui contient des failles : mauvaise gestion des sessions, hashage insuffisant, vérifications manquantes sur les tokens. Les patterns de sécurité évoluent, et un modèle entraîné avant une CVE importante peut reproduire un pattern vulnérable.
 
-Approche recommandée : l'IA génère, un audit humain valide. Pour les implémentations critiques, utiliser des librairies éprouvées (Passport, Auth.js) plutôt que du code custom généré.
+Approche recommandée : l'IA génère, un audit humain valide. Pour les implémentations critiques (authentification, hachage, vérification de signatures), utiliser des bibliothèques éprouvées et maintenues plutôt que du code custom généré. Vérifiez aussi que la bibliothèque est toujours activement maintenue : cet écosystème évolue vite.
 
 ### Logique métier complexe
 
@@ -137,13 +166,29 @@ Utiliser l'IA pour explorer des options et challenger ses propres hypothèses, p
 
 Une migration mal générée peut corrompre des données de production. L'IA peut produire des migrations syntaxiquement valides qui ont des effets de bord non anticipés sur de grands volumes, ou qui ne gèrent pas correctement les valeurs nulles existantes.
 
-Approche recommandée : l'IA génère le squelette, le développeur valide la logique, tests sur un dump de données de production avant exécution.
+Approche recommandée : l'IA génère le squelette, le développeur valide la logique, et la migration est testée sur une copie anonymisée ou pseudonymisée des données de production, ou sur un environnement de recette avec des volumes représentatifs, avant toute exécution. Des données personnelles de production n'ont pas leur place dans un environnement de test (RGPD).
+
+### Les risques propres aux agents
+
+Un agent ne se contente pas de générer du texte : il installe des dépendances, lit du contenu externe et exécute des commandes. Cela ajoute des risques que la génération seule n'avait pas.
+
+- **Les dépendances inventées.** Une étude présentée à USENIX Security 2025 (16 modèles, 576 000 échantillons de code Python et JavaScript) a mesuré qu'en moyenne un cinquième des paquets recommandés n'existaient pas, et que de nombreux noms inventés revenaient d'une exécution à l'autre. Un attaquant peut alors enregistrer ces noms et y placer du code malveillant (le *slopsquatting*). Le phénomène varie selon les modèles, mais le risque n'est jamais nul.
+- **L'injection de prompt.** Un agent lit des pages web, des issues, des résultats d'outils MCP. Ce contenu peut contenir des instructions qui détournent son comportement.
+- **Les commandes destructrices.** Suppression de fichiers ou de données, commandes lancées sur le mauvais environnement.
+- **Les secrets.** Une clé d'API présente dans le contexte ou dans un fichier lu par l'agent peut se retrouver dans une sortie ou un commit.
+
+Les remèdes existent dans le module :
+
+- vérifier qu'un paquet existe, qui le maintient et depuis quand avant de l'installer, plutôt que de se fier à une installation qui réussit (un paquet malveillant s'installe très bien). C'est aussi l'intérêt de la règle « ne pas installer de nouvelles dépendances sans validation » du fichier de contexte (Chapitre 3) ;
+- donner à l'agent des permissions minimales et un environnement isolé ;
+- bloquer automatiquement les actions critiques avec des hooks (Chapitre 3) ;
+- ne configurer que des serveurs MCP d'éditeurs identifiés (Chapitre 4).
 
 ---
 
 ## 5.4 La revue de code augmentée
 
-L'IA comme premier reviewer est l'un des gains les plus immédiats et les moins discutés. Avant de soumettre une PR, faire passer le diff à l'IA permet de détecter des problèmes que la fatigue ou la familiarité avec le code fait manquer.
+L'IA peut servir de premier reviewer. Avant de soumettre une PR, faire passer le diff à l'IA permet de détecter des problèmes que la fatigue ou la familiarité avec le code fait manquer. Des outils intègrent aussi cette revue directement aux pull requests (Copilot code review, Bugbot de Cursor, Devin Review, par exemple), sans prompt manuel.
 
 ### Ce que l'IA détecte bien
 
@@ -159,7 +204,7 @@ Identifie :
 Ne commente pas le style ou le formatage."
 ```
 
-L'IA est particulièrement efficace pour détecter : les null pointer potentiels, les race conditions sur les opérations async, les imports manquants, les types incorrects, les patterns inhabituels qui méritent une explication.
+L'IA est particulièrement efficace pour détecter : les null pointer potentiels, les imports manquants, les types incorrects, les patterns inhabituels qui méritent une explication. Elle repère parfois des problèmes de concurrence (race conditions), mais ceux-ci dépendent de l'exécution et ne se délèguent pas.
 
 ### Ce que l'IA détecte mal
 
@@ -167,6 +212,10 @@ L'IA est particulièrement efficace pour détecter : les null pointer potentiels
 - Les impacts sur des parties du code non incluses dans le diff
 - Les problèmes de performance qui ne sont visibles qu'à l'exécution
 - La conformité aux règles métier non documentées dans le code
+
+### Les limites de l'auto-revue
+
+Quand le même modèle relit le code qu'il vient de générer, il partage ses propres angles morts. Pour une revue plus indépendante, utilisez un contexte neuf, voire un autre modèle. Une revue IA peut aussi produire du bruit (fausses alertes) : elle éclaire la revue humaine, mais ne doit pas bloquer une PR à elle seule.
 
 La revue IA complète la revue humaine, elle ne la remplace pas.
 
@@ -180,7 +229,7 @@ Le **human-in-the-loop** n'est pas une étape administrative, c'est le mécanism
 
 ### Quand reprendre la main
 
-**Avant l'exécution :** valider le plan proposé par l'agent. C'est l'étape la plus rentable: 30 secondes de correction évitent potentiellement 1 heure de débogage.
+**Avant l'exécution :** valider le plan proposé par l'agent. C'est l'étape la plus rentable : quelques secondes de correction évitent potentiellement des heures de débogage.
 
 **Pendant l'exécution :** surveiller les actions de l'agent en mode autonome. Si l'agent commence à modifier des fichiers inattendus ou à introduire des dépendances non prévues, interrompre.
 
@@ -188,9 +237,11 @@ Le **human-in-the-loop** n'est pas une étape administrative, c'est le mécanism
 
 **Avant tout commit :** vérifier que ce qui est commité correspond à ce qui a été validé. L'agent peut avoir introduit des modifications collatérales.
 
-### Les checkpoints en agent mode
+### Les points de contrôle
 
-En agent mode autonome, configurer des checkpoints explicites pour les tâches longues :
+Avec un agent autonome, il faut prévoir des points de contrôle pour les tâches longues. Ils existent à deux niveaux.
+
+**Les checkpoints demandés dans le prompt** sont souples :
 
 ```
 "Implémente la feature de gestion des remises selon le plan validé.
@@ -198,7 +249,16 @@ Checkpoint obligatoire après chaque étape du plan : présente ce que tu as fai
 avant de passer à l'étape suivante. N'avance pas sans validation explicite."
 ```
 
-Ce pattern ralentit l'exécution mais évite de laisser l'agent partir dans une mauvaise direction pendant 20 minutes.
+Ce pattern ralentit l'exécution mais évite de laisser l'agent partir dans une mauvaise direction pendant plusieurs minutes. Il reste cependant une instruction : le modèle peut l'oublier ou la déprioriser (Chapitre 3).
+
+**Les contrôles durs** s'appliquent sans dépendre du modèle :
+
+- le **mode plan** que proposent la plupart des agents : le plan est présenté, et rien n'est exécuté avant votre validation ;
+- les **validations de permission** : l'outil demande l'accord avant une commande ou une modification ;
+- les **hooks** (Chapitre 3), pour bloquer automatiquement une action critique ;
+- **git** : travailler sur une branche dédiée et committer à chaque étape. Chaque commit est un point de retour, et le diff d'un commit se relit facilement.
+
+Pour une règle critique, par exemple ne jamais modifier certains fichiers, ne vous contentez pas d'un checkpoint écrit dans le prompt : utilisez un contrôle dur.
 
 ### Comprendre ce qu'on intègre
 
@@ -215,25 +275,34 @@ Si une section du code généré n'est pas comprise, la demande d'explication fa
 
 ---
 
-## 5.6 Exercice: identifier les cas d'usage
+## 5.6 Exercice : identifier les cas d'usage
 
-Voici une liste de tâches de développement. Pour chacune, classez-la en trois catégories : **fort ROI** (bonne candidate à une forte délégation), **risque élevé** (délégation faible, validation renforcée), ou **intermédiaire**.
+Voici une liste de tâches de développement. Pour chacune, classez-la en trois catégories : **fort ROI** (bonne candidate à une forte délégation), **risque élevé** (délégation faible, validation renforcée), ou **intermédiaire** (délégation moyenne, validation complète).
 
-![Human-in-the-loop](./assets/fig5.04.png "Human-in-the-loop")
+| Tâche | Votre classification |
+| --- | --- |
+| Générer des tests unitaires pour une fonction de calcul de remise | |
+| Implémenter le hachage des mots de passe utilisateurs | |
+| Documenter les méthodes publiques d'un service existant | |
+| Écrire la migration SQL qui supprime une colonne utilisée en production | |
+| Comprendre l'architecture d'un module legacy de 3 000 lignes | |
+| Implémenter un algorithme de recommandation basé sur l'historique utilisateur | |
+| Générer le boilerplate d'un nouveau controller REST | |
+| Implémenter la vérification de signature des webhooks Stripe | |
 
 <details>
 <summary><strong>Correction et justifications</strong></summary>
 
-| Tâche                               | Classification         | Justification                                                           |
-| ----------------------------------- | ---------------------- | ----------------------------------------------------------------------- |
-| Tests unitaires (calcul de remise)  | Fort ROI               | Pattern bien défini, validation directe par exécution                   |
-| Hachage des mots de passe           | Risque élevé           | Sécurité critique, préférer une librairie éprouvée, audit obligatoire   |
-| Documentation JSDoc                 | Fort ROI               | Coût faible, valeur immédiate, validation facile                        |
-| Migration SQL (suppression colonne) | Risque élevé           | Irréversible sur données de prod, tester sur dump avant toute exécution |
-| Legacy comprehension                | Fort ROI               | Gain de temps massif, la "réponse" est une explication, pas du code     |
-| Algorithme de recommandation        | Intermédiaire à risque | Logique métier complexe, les cas limites dépendent du domaine           |
-| Boilerplate controller REST         | Fort ROI               | Répétitif, pattern bien défini, aucune logique critique                 |
-| Vérification signature webhooks     | Risque élevé           | Sécurité critique, une erreur ouvre une surface d'attaque               |
+| Tâche | Classification | Justification |
+| --- | --- | --- |
+| Tests unitaires (calcul de remise) | Fort ROI | Pattern bien défini, validation directe par exécution |
+| Hachage des mots de passe | Risque élevé | Sécurité critique, préférer une bibliothèque éprouvée, audit obligatoire |
+| Documentation JSDoc | Fort ROI | Coût faible, valeur immédiate, validation facile |
+| Migration SQL (suppression colonne) | Risque élevé | Irréversible sur données de prod, tester sur une copie anonymisée ou un environnement de recette avant toute exécution |
+| Legacy comprehension | Fort ROI | Gain de temps massif, la "réponse" est une explication, pas du code (à vérifier contre le code) |
+| Algorithme de recommandation | Intermédiaire | Logique métier complexe : les cas limites dépendent du domaine, validation complète et review ligne par ligne |
+| Boilerplate controller REST | Fort ROI | Répétitif, pattern bien défini, aucune logique critique |
+| Vérification signature webhooks | Risque élevé | Sécurité critique, une erreur ouvre une surface d'attaque, préférer la bibliothèque officielle du fournisseur |
 
 </details>
 
@@ -241,27 +310,29 @@ Voici une liste de tâches de développement. Pour chacune, classez-la en trois 
 
 ## ✅ Quiz — Chapitre 5
 
+_10 questions — environ 10 minutes_
+
 ---
 
 **Question 1.** Un agent travaille sur un projet de 80 000 lignes. Quelle est la bonne approche pour gérer le contexte ?
 
-- A) Envoyer l'intégralité du projet à chaque échange pour que l'agent ait toujours le contexte complet
-- B) Travailler composant par composant avec un périmètre de fichiers explicite à chaque tâche
-- C) Ne jamais envoyer plus d'un fichier à la fois pour éviter la saturation
-- D) Laisser l'agent décider lui-même quels fichiers inclure dans son contexte
+- A) Cadrer un périmètre de fichiers par tâche et lui donner des repères (types, fichiers liés, fichier de contexte), plutôt que de tout lui fournir
+- B) Envoyer l'intégralité du projet à chaque échange pour que l'agent ait toujours le contexte complet
+- C) Ne jamais lui donner plus d'un fichier à la fois pour éviter la saturation
+- D) Ne rien cadrer : l'agent explorera de toute façon tout le projet sans conséquence
 
-> ✅ **Réponse : B** — La bonne approche est de cibler le contexte sur les fichiers pertinents pour la tâche courante. Envoyer tout le projet est impraticable et dégrade la qualité de l'attention. Un fichier à la fois est trop restrictif pour les tâches qui touchent plusieurs composants.
+> ✅ **Réponse : A** — Même avec une grande context window, remplir le contexte coûte plus cher, ralentit les réponses et dégrade l'attention. Un projet de cette taille représente par ailleurs de l'ordre d'un million de tokens ou plus. Un agent explore lui-même le projet, mais il travaille mieux avec un périmètre explicite et des repères. Un fichier à la fois (C) est trop restrictif pour les tâches qui touchent plusieurs composants, et ne rien cadrer (D) laisse l'agent se disperser.
 
 ---
 
-**Question 2.** Quels sont les symptômes d'une context window surchargée ?
+**Question 2.** Quel est un symptôme de qualité d'une context window surchargée ?
 
 - A) Le modèle refuse de répondre et demande de vider la conversation
-- B) Le modèle ignore des contraintes spécifiées, les réponses deviennent incohérentes avec le contexte établi
-- C) Le temps de réponse augmente significativement
-- D) Le modèle commence à répondre dans une autre langue
+- B) Le modèle se met à répondre dans une autre langue
+- C) Le modèle ignore des contraintes spécifiées plus tôt, et ses réponses deviennent incohérentes avec le contexte établi
+- D) La température du modèle augmente
 
-> ✅ **Réponse : B** — Une context window surchargée dégrade la qualité de l'attention : le modèle commence à ignorer des contraintes spécifiées en début de prompt et les réponses deviennent moins cohérentes. Le remède est de redémarrer la conversation avec un contexte recentré.
+> ✅ **Réponse : C** — Une context window surchargée dégrade la qualité de l'attention : le modèle ignore des contraintes spécifiées en début de prompt, et ses réponses deviennent moins cohérentes. Le coût et le temps de réponse augmentent aussi, mais ce sont des effets de coût, pas de qualité. Le remède est de redémarrer la conversation avec un contexte recentré, ou de compacter l'historique.
 
 ---
 
@@ -280,10 +351,10 @@ Voici une liste de tâches de développement. Pour chacune, classez-la en trois 
 
 - A) Accepter la génération si le code compile et que les tests passent
 - B) Refuser. L'IA ne peut pas générer du code de sécurité correct
-- C) Utiliser la génération comme point de départ, auditer systématiquement chaque mécanisme de sécurité, et privilégier les librairies éprouvées pour les parties critiques
-- D) Générer avec une température basse pour maximiser le déterminisme et la sécurité
+- C) Demander à un modèle avec un effort de réflexion élevé de la générer : c'est une garantie de sécurité
+- D) Utiliser la génération comme point de départ, auditer systématiquement chaque mécanisme de sécurité, et privilégier les bibliothèques éprouvées pour les parties critiques
 
-> ✅ **Réponse : C** — L'IA peut générer une implémentation JWT syntaxiquement correcte qui contient des failles. La bonne approche est de traiter la génération comme un point de départ, d'auditer chaque mécanisme, et de s'appuyer sur des librairies éprouvées (Auth.js, Passport) pour les parties les plus sensibles.
+> ✅ **Réponse : D** — L'IA peut générer une implémentation JWT syntaxiquement correcte qui contient des failles. La bonne approche est de traiter la génération comme un point de départ, d'auditer chaque mécanisme, et de s'appuyer sur des bibliothèques éprouvées et maintenues pour les parties les plus sensibles. Un effort de réflexion élevé (C) améliore le raisonnement, il ne garantit pas la sécurité. Un code qui compile et passe ses tests (A) peut rester vulnérable.
 
 ---
 
@@ -298,25 +369,25 @@ Voici une liste de tâches de développement. Pour chacune, classez-la en trois 
 
 ---
 
-**Question 6.** Lors d'une tâche longue en agent mode, quelle instruction améliore le contrôle humain sans interrompre complètement l'autonomie de l'agent ?
+**Question 6.** Lors d'une tâche longue confiée à un agent, quelle instruction améliore le contrôle humain sans interrompre complètement l'autonomie de l'agent ?
 
 - A) "Arrête-toi après chaque fichier modifié"
-- B) "Présente ce que tu as fait après chaque étape du plan et attends une validation explicite avant de continuer"
-- C) "Travaille en mode lecture seule et propose les modifications sans les appliquer"
+- B) "Travaille en mode lecture seule et propose les modifications sans les appliquer"
+- C) "Présente ce que tu as fait après chaque étape du plan et attends une validation explicite avant de continuer"
 - D) "Limite-toi à 100 lignes de code par réponse"
 
-> ✅ **Réponse : B** — Les checkpoints après chaque étape du plan permettent de valider la progression sans interrompre à chaque ligne. C est trop restrictif pour les tâches de génération. A crée trop d'interruptions. D est arbitraire et ne correspond pas à la logique des tâches.
+> ✅ **Réponse : C** — Les checkpoints après chaque étape du plan permettent de valider la progression sans interrompre à chaque ligne. B est trop restrictif pour les tâches de génération. A crée trop d'interruptions. D est arbitraire et ne correspond pas à la logique des tâches.
 
 ---
 
 **Question 7.** Un développeur intègre un bloc de code généré par l'IA qu'il ne comprend pas entièrement, mais qui "semble fonctionner". Quel est le risque principal ?
 
-- A) Le code sera détecté comme généré par IA lors d'un audit
-- B) Le développeur ne pourra pas déboguer, maintenir ou expliquer ce code si un problème survient
+- A) Le développeur ne pourra pas déboguer, maintenir ou expliquer ce code si un problème survient
+- B) Le code sera détecté comme généré par IA lors d'un audit
 - C) La performance sera dégradée car le code généré est rarement optimisé
 - D) Le code introduira des dépendances non autorisées par la politique de l'organisation
 
-> ✅ **Réponse : B** — Intégrer du code non compris, c'est créer une dette de compréhension : le développeur ne peut pas déboguer le code si quelque chose échoue, ni l'expliquer lors d'une revue ou d'un handover. C'est la définition du vibe coding appliquée à l'intégration.
+> ✅ **Réponse : A** — Intégrer du code non compris, c'est créer une dette de compréhension : le développeur ne peut pas déboguer le code si quelque chose échoue, ni l'expliquer lors d'une revue ou d'un handover. C'est la définition du vibe coding appliquée à l'intégration.
 
 ---
 
@@ -324,7 +395,29 @@ Voici une liste de tâches de développement. Pour chacune, classez-la en trois 
 
 - A) Parce que les outils IA ne sont pas encore suffisamment performants pour ce cas d'usage
 - B) Parce que l'IA ne peut pas accéder au diff d'une PR
-- C) Parce que l'IA ne détecte pas les régressions fonctionnelles sur des comportements non documentés dans le code, ni les impacts sur des parties non incluses dans le diff
-- D) Parce que les reviewers humains sont plus rapides sur les PR simples
+- C) Parce que les reviewers humains sont plus rapides sur les PR simples
+- D) Parce que l'IA ne détecte pas les régressions fonctionnelles sur des comportements non documentés dans le code, ni les impacts sur des parties non incluses dans le diff
 
-> ✅ **Réponse : C** — La review IA est efficace sur ce qui est visible dans le code : bugs, patterns, sécurité évidente. Elle ne peut pas évaluer les régressions fonctionnelles sur des comportements métier non documentés, ni les impacts sur des parties du système absentes du diff. La complémentarité est la bonne approche.
+> ✅ **Réponse : D** — La review IA est efficace sur ce qui est visible dans le code : bugs, patterns, sécurité évidente. Elle ne peut pas évaluer les régressions fonctionnelles sur des comportements métier non documentés, ni les impacts sur des parties du système absentes du diff. La complémentarité est la bonne approche.
+
+---
+
+**Question 9.** Un agent propose d'installer une dépendance que vous ne connaissez pas. Que faites-vous ?
+
+- A) Vous acceptez, puisque l'installation réussit
+- B) Vous vérifiez que le paquet existe, qui le maintient, depuis quand, et s'il est vraiment nécessaire, avant de valider
+- C) Vous acceptez, car l'agent semble sûr de lui
+- D) Vous demandez à l'agent de la désinstaller après l'avoir utilisée
+
+> ✅ **Réponse : B** — Les modèles inventent des noms de paquets, et un attaquant peut enregistrer ces noms pour y placer du code malveillant. Une installation qui réussit ne prouve rien : un paquet malveillant s'installe très bien. La confiance affichée par l'agent (C) n'est pas un critère, et la désinstallation (D) arrive après l'exécution éventuelle de code malveillant.
+
+---
+
+**Question 10.** Pourquoi un checkpoint demandé dans un prompt ne suffit-il pas pour une règle critique, par exemple ne jamais modifier certains fichiers ?
+
+- A) Parce que c'est une instruction que le modèle peut oublier ou déprioriser : une règle critique relève d'un contrôle automatique (hook, validation de permission)
+- B) Parce que les agents ne comprennent pas les prompts de checkpoint
+- C) Parce que les checkpoints ralentissent trop l'agent
+- D) Parce que seuls les humains peuvent lire les messages de checkpoint
+
+> ✅ **Réponse : A** — Une instruction dans un prompt reste probabiliste (Chapitre 3). Pour une règle qui doit s'appliquer à chaque fois, il faut un contrôle qui ne dépend pas du modèle : mode plan, validation de permission, hook, ou revue du diff avant chaque commit. B est faux, les agents comprennent ces consignes. C et D ne répondent pas à la question de la fiabilité.

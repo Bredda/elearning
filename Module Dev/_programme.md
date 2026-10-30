@@ -73,11 +73,11 @@ Voici le plan affiné.
 
 Passer de l'usage individuel structuré aux cas à fort ROI et aux limites à connaître.
 
-- Gestion du contexte sur de gros projets : découpage des tâches, ne pas saturer la context window
+- Gestion du contexte sur de gros projets : découpage des tâches, orienter l'agent, techniques (AGENTS.md par dossier, subagents), ne pas saturer la context window
 - Les cas à fort ROI : legacy comprehension, génération de tests, documentation, refacto
-- Les cas à risque : sécurité, logique métier critique, architecture — quand reprendre la main
-- Revue de code augmentée : l'IA comme premier reviewer, ce qu'elle voit et ce qu'elle rate
-- Human-in-the-loop : valider chaque étape, comprendre ce qui est produit
+- Les cas à risque : sécurité, logique métier critique, architecture, migrations — quand reprendre la main — et les risques propres aux agents (dépendances inventées, injection de prompt, commandes destructrices, secrets)
+- Revue de code augmentée : l'IA comme premier reviewer, ce qu'elle voit et ce qu'elle rate, limites de l'auto-revue
+- Human-in-the-loop : valider chaque étape, points de contrôle souples (prompt) et durs (mode plan, permissions, hooks, git), comprendre ce qui est produit
 - Exercice : identifier dans une liste de tâches celles qui sont à fort ROI vs à risque élevé
 - Quiz 5-10 questions
 
