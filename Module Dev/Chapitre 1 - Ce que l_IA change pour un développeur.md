@@ -10,9 +10,7 @@ Pour le grand public, la bascule vient plus tard : fin 2022, ChatGPT, qui s'appu
 
 Ce qui change pour un développeur, c'est l'accessibilité programmatique : les LLM sont devenus des API comme les autres, consommables en quelques lignes de code. L'IA n'est plus un domaine réservé aux équipes de recherche, c'est une brique d'intégration.
 
-![D'où ça vient — l'essentiel](./assets/fig1.01.png "D'où ça vient — l'essentiel")
-
-![D'où ça vient — l'essentiel](./assets/fig1.02.png "D'où ça vient — l'essentiel")
+![D'où ça vient — l'essentiel](./assets/fig01.01.png "D'où ça vient — l'essentiel")
 
 ---
 
@@ -39,7 +37,7 @@ Ce que ça implique concrètement :
 - La context window est limitée en tokens
 - Un fichier de code de 500 lignes représente environ 5 000 à 8 000 tokens selon le langage
 
-![Tokens](./assets/fig1.04.png "Tokens")
+![Tokens](./assets/fig01.04.png "Tokens")
 
 [=> Tool tokenizer visuel de OpenAI](https://platform.openai.com/tokenizer)
 
@@ -63,7 +61,7 @@ Attention : ces chiffres sont la limite technique maximale du modèle. La fenêt
 
 Plus la context window est grande, plus le modèle peut recevoir de contexte. Mais une fenêtre contextuelle plus grande n'est pas obligatoirement la panacée : si elle est surchargée, elle augmente le coût de la requête et le temps de réponse, et dégrade la qualité de l'attention sur les éléments importants (phénomène [lost in the middle](https://www.emergentmind.com/papers/2307.03172) par exemple), donc la qualité de la réponse.
 
-![Context window](./assets/fig1.05.png "Context window")
+![Context window](./assets/fig01.05.png "Context window")
 
 ### Température
 
@@ -95,7 +93,7 @@ Conséquence directe : le modèle peut produire du code syntaxiquement parfait q
 
 Un LLM seul a des limitations structurelles importantes. Comprendre ces limitations explique pourquoi et comment l'écosystème autour des LLM s'est développé aussi rapidement.
 
-![Les briques d'intégration](./assets/fig1.06.png "Les briques d'intégration")
+![Les briques d'intégration](./assets/fig01.06.png "Les briques d'intégration")
 
 **Limitation 1 : le modèle ne connaît pas votre contexte.**
 
@@ -123,7 +121,7 @@ Réponse à la limitation 1 (connaissance).
 
 Plutôt que d'espérer que le modèle connaisse les bonnes réponses, on lui donne accès à une base de documents au moment où il en a besoin. Avant de répondre, on recherche pour lui les passages pertinents et il construit sa réponse en s'appuyant dessus.
 
-![Retrieval-Augmented Generation](./assets/fig.1.07.png "Retrieval-Augmented Generation")
+![Retrieval-Augmented Generation](./assets/fig.01.07.png "Retrieval-Augmented Generation")
 
 Cas d'usage typiques : chatbot sur documentation interne, search dans une codebase, assistant sur une base de connaissance métier.
 
@@ -131,7 +129,7 @@ Cas d'usage typiques : chatbot sur documentation interne, search dans une codeba
 
 Réponse à la limitation 2 (action). Ce mécanisme permet au LLM de demander l'exécution d'une fonction externe. Le modèle produit une instruction structurée ("appelle cet outil avec ces paramètres"), l'application l'exécute, et renvoie le résultat au modèle qui l'utilise pour construire sa réponse.
 
-![Tool calling](./assets/fig.1.08.png "Tool calling")
+![Tool calling](./assets/fig.01.08.png "Tool calling")
 
 C'est la brique de base du fonctionnement agentique.
 
@@ -139,7 +137,7 @@ C'est la brique de base du fonctionnement agentique.
 
 Un agent utilise le tool calling en boucle pour accomplir une tâche complexe en plusieurs étapes. Le modèle décide quels outils appeler, dans quel ordre, en fonction du résultat de chaque étape. Cette boucle réflexion → action → observation est connue sous le nom de **ReAct** (*Reason + Act*).
 
-![ReAct Agent](./assets/fig.1.09.png "ReAct Agent")
+![ReAct Agent](./assets/fig.01.09.png "ReAct Agent")
 
 ```
 Tâche → LLM planifie → appelle outil 1 → reçoit résultat
