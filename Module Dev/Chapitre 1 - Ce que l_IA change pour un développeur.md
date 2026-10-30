@@ -211,69 +211,15 @@ L'intérêt principal : répondre aux contraintes de confidentialité ou de souv
 
 ---
 
-## 1.5 Le spectre de délégation
+## 1.5 Ce qu'il faut retenir
 
-L'IA dans le développement n'est pas un interrupteur on/off. C'est un spectre continu entre deux positions, et la bonne position dépend de la tâche, du contexte, et de la maîtrise du domaine.
+Trois idées structurent la suite du module :
 
-![Le spectre de délégation](./assets/fig.1.11.png "Le spectre de délégation")
+- **Le modèle est sans état et probabiliste.** Il ne connaît que ce qui se trouve dans sa context window et peut produire du code plausible mais faux : la validation humaine n'est pas optionnelle.
+- **Un LLM seul ne suffit pas.** RAG, tool calling, agents, MCP, skills, hooks et subagents répondent chacun à une limite précise, et c'est leur combinaison qui fait les outils de développement actuels.
+- **Le choix d'un modèle est un arbitrage** entre la qualité sur la tâche, la context window réellement disponible, les contraintes de données et le coût.
 
-**Autocomplétion inline**
-Le modèle complète ce qui est tapé. Le contrôle reste total: chaque suggestion peut être acceptée ou refusée. Risque minimal pour valeur immédiate. C'est le mode le plus universel.
-
-**Chat / Q&A**
-Une question, une réponse. Utile pour déboguer, comprendre une API inconnue, expliquer du legacy. Le développeur intègre manuellement ce qui est pertinent.
-
-**Génération guidée**
-Une tâche est décrite, le modèle génère une fonction, un test, un composant. Le développeur lit et valide avant d'intégrer. C'est là que la qualité du prompt commence à compter vraiment.
-
-**Edit mode / multi-fichiers**
-Le modèle modifie plusieurs fichiers selon les instructions. Le développeur review les diffs avant d'accepter.
-
-**Agent autonome**
-Le modèle planifie, exécute et itère de façon autonome sur une tâche complexe. Le développeur spécifie l'objectif et valide à des checkpoints. C'est là que le mode agentique (Chapitre 2) devient indispensable.
-
----
-
-## 1.6 Vibe Coding vs Agentic Coding
-
-![Vibe Coding vs Agentic Coding](./assets/fig.1.12.png "Vibe Coding vs Agentic Coding")
-
-### Vibe Coding
-
-Générer du code sans le lire, sans le comprendre, sans le valider, en se fiant au fait que "ça a l'air de marcher". C'est tentant parce que c'est rapide et ce n'est pas condamnable en soi : c'est typiquement le bon choix pour un prototype jetable, une exploration personnelle, un POC de démonstration, bref tout code qui n'a pas vocation à survivre.
-
-Le risque apparaît quand ce même code change de destination : quand il glisse en production, ou devient la base d'une feature livrée à un client, sans repasser par une phase de compréhension et de validation. C'est là que les problèmes deviennent réels :
-
-- **Bugs silencieux** : le code compile, les tests passent, mais la logique est fausse sur des cas limites. On ne s'en aperçoit qu'en production.
-- **Dette technique invisible** : du code généré sans compréhension est du code que personne ne sait maintenir.
-- **Perte de maîtrise progressive** : plus on accepte sans comprendre, moins on est capable de déboguer ce que l'IA a produit.
-- **Hallucinations non détectées** : une API inventée, une dépendance manquante, une condition logique inversée. Sans review, ça passe sous le radar.
-
-Le critère qui bascule le vibe coding en risque n'est donc pas le mode de génération, c'est **la destination du code**.
-
-### Agentic Coding
-
-Collaborer de façon structurée avec l'IA, tout en restant aux commandes. Le dev délègue l'exécution, pas la décision.
-
-```
-SPECIFY   →  Définir précisément la tâche, les contraintes, le contexte
-PLAN      →  Faire proposer un plan par le modèle, le valider avant d'exécuter
-IMPLEMENT →  L'IA génère, le dev suit et intervient si nécessaire
-VALIDATE  →  Review du code produit, tests, vérification de la logique
-```
-
-Sur des tâches simples et bien bornées, la validation prend quelques secondes. Sur des tâches complexes, elle évite de passer des heures à déboguer du code qu'on n'a pas écrit.
-
-### Le spectre entre les deux
-
-Ce n'est pas un choix binaire. Un développeur expérimenté peut naviguer entre les deux selon le contexte :
-
-- **Autocomplétion courte** → acceptance rapide sans review approfondie est acceptable
-- **Exploration d'une feature** → vibe coding rapide pour confronter l'idée au besoin
-- **Génération d'une fonction critique** → review ligne par ligne
-- **Tâche multi-fichiers en agent mode** → checkpoints réguliers, validation des diffs
-
-La compétence clé : savoir calibrer le niveau de délégation et de validation selon la criticité de la tâche.
+Reste à savoir quelle place donner à l'IA dans votre pratique de développeur : quel niveau de délégation, de l'autocomplétion à l'agent autonome, et quel niveau de validation en face. C'est l'objet du Chapitre 2.
 
 ---
 
@@ -424,33 +370,33 @@ _8 questions — environ 8 minutes_
 
 ---
 
-**Question 6.** Sur le spectre de délégation, dans quel mode la validation humaine est la plus critique ?
+**Question 6.** Votre chatbot interne doit répondre sur une documentation propriétaire modifiée chaque semaine. Quelle approche est la plus adaptée ?
 
-- A) Autocomplétion inline
-- B) Chat / Q&A
-- C) Génération guidée d'une fonction
-- D) Agent autonome sur une tâche multi-fichiers
+- A) Un RAG : indexer la documentation et injecter les passages pertinents dans le prompt
+- B) Un fine-tuning du modèle à chaque mise à jour
+- C) Coller toute la documentation dans la context window à chaque requête
+- D) Augmenter la température pour obtenir des réponses plus variées
 
-> ✅ **Réponse : D** — Plus la délégation est large et la tâche complexe, plus la validation est critique. Un agent autonome peut modifier de nombreux fichiers en chaîne. Chaque diff mérite une review attentive.
-
----
-
-**Question 7.** Laquelle de ces situations décrit du vibe coding ?
-
-- A) Accepter une suggestion d'autocomplétion d'une ligne après l'avoir lue
-- B) Utiliser Copilot Chat pour comprendre une fonction legacy avant de la modifier
-- C) Sur un POC jetable, laisser l'agent générer 15 fichiers, vérifier que la démo fonctionne et enchaîner directement sur l'itération suivante sans relire le code
-- D) Demander au modèle de proposer plusieurs implémentations d'un algorithme pour choisir la meilleure
-
-> ✅ **Réponse : C** — On juge au résultat, pas au code : c'est la définition même du vibe coding. Et ici, c'est un usage pertinent : sur un POC destiné à être jeté, la vitesse d'itération prime et permet de confronter très vite une idée au besoin. La vigilance s'impose seulement si ce code change de destination (production, base d'une feature client) : il doit alors repasser par une phase de review et de validation.
+> ✅ **Réponse : A** — Le RAG apporte au modèle les passages utiles au moment de la requête, sans ré-entraîner. B est coûteux et inadapté à une base qui change chaque semaine. C sature la context window, augmente le coût et dégrade l'attention. D n'a aucun rapport avec la connaissance.
 
 ---
 
-**Question 8.** Dans le workflow agentic Specify → Plan → Implement → Validate, à quelle étape le dev reprend le plus activement la main ?
+**Question 7.** Dans un échange de tool calling, qui exécute réellement la fonction demandée par le modèle ?
 
-- A) Specify: c'est l'étape la plus longue
-- B) Plan: valider le plan avant d'exécuter est la décision clé
-- C) Implement: le dev code en parallèle de l'IA
-- D) Validate: c'est la seule étape qui compte vraiment
+- A) L'application qui orchestre l'échange
+- B) Le modèle lui-même
+- C) Le fournisseur du modèle, automatiquement
+- D) L'utilisateur, manuellement
 
-> ✅ **Réponse : B** — Valider le plan avant d'exécuter est l'étape critique : c'est là qu'on évite de laisser l'IA partir dans une mauvaise direction pendant 20 minutes. Validate est aussi important, mais si le plan est bon, la validation est plus légère.
+> ✅ **Réponse : A** — Le modèle ne produit qu'une instruction structurée (« appelle cet outil avec ces paramètres »). L'application l'exécute, puis renvoie le résultat au modèle, qui construit sa réponse.
+
+---
+
+**Question 8.** La fiche d'un modèle annonce 1M de tokens de contexte, mais dans votre outil vous atteignez la limite bien avant. Quelle est l'explication la plus probable ?
+
+- A) La fiche du modèle est fausse
+- B) Le modèle oublie progressivement le début de la conversation
+- C) La température est trop haute
+- D) L'outil ou l'offre plafonne la fenêtre disponible, sous le maximum technique du modèle
+
+> ✅ **Réponse : D** — Le maximum technique d'un modèle et la fenêtre réellement disponible dans un outil diffèrent souvent. Vérifiez la valeur effective dans votre outil plutôt que de vous fier à la fiche du modèle.

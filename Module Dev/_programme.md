@@ -18,14 +18,14 @@ Voici le plan affiné.
 - Mécanique essentielle : tokens, context window, température. Ce que ça implique concrètement pour coder
 - Ce que le modèle fait vraiment : prédiction vs compréhension, hallucinations, limites sur le code
 - Le marché des modèles : GPT, Claude, Gemini, Mistral, positionnement rapide depuis l'angle dev
-- Le spectre de délégation : autocomplétion → chat → agent autonome
-- Vibe coding vs agentic coding : la distinction fondatrice, les risques concrets du premier
+- Passerelle vers le Chapitre 2 : ce qu'il faut retenir, et la question de la place de l'IA dans la pratique du développeur
 - Quiz 5-10 questions
 
 ---
 
 ### Chapitre 2 — Vibe Coding vs Agentic Coding (30 min)
 
+- Le spectre de délégation : autocomplétion → chat → génération guidée → edit multi-fichiers → agent autonome, et la posture adoptée face au code produit
 - Vibe coding : définition, pourquoi c'est tentant, les dangers concrets
   - Accepter sans comprendre : bugs silencieux, dette technique invisible
   - Perte progressive de maîtrise sur le code produit
