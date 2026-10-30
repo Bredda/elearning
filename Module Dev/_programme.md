@@ -40,15 +40,17 @@ Voici le plan affiné.
 
 ---
 
-### Chapitre 3 — Prompt Engineering pour développeurs (45 min)
+### Chapitre 3 — Instruire l'agent : du prompt au savoir-faire (45 min)
 
 - Pourquoi le prompt pour dev est différent du prompt généraliste
 - Anatomie d'un bon prompt de dev : rôle, contexte codebase, spec, contraintes, format attendu
-- Techniques appliquées au code : zero-shot, few-shot, chain of thought
-- Gérer le contexte : ce qu'on donne au modèle, ce qu'on ne donne pas — arbitrage tokens/qualité
-- Les fichiers de contexte : `.github/copilot-instructions.md`, `CLAUDE.md` — même concept, outils différents
-- Les erreurs classiques : trop vague, trop long, contexte manquant, pas de validation demandée
-- Exercice guidé : réécrire 3 prompts naïfs sur des cas de dev réels (auto-corrigé)
+- Techniques appliquées au code : zero-shot, few-shot, itération guidée, chain of thought (pattern aujourd'hui intégré aux modèles, présenté « derrière le rideau »)
+- Les fichiers de contexte : `AGENTS.md` comme standard unique, conventions propres à chaque outil, ce qu'on y met et ce qu'on n'y met pas
+- Skills : figer le savoir-faire d'une tâche récurrente, chargé à la demande
+- Hooks : faire appliquer à coup sûr les règles critiques (déterministe, contrairement à une instruction)
+- Assembler le tout : `AGENTS.md`, skills et hooks sur un même projet, et où va chaque règle
+- Les erreurs classiques : trop vague, trop chargé, contexte manquant, pas de validation demandée
+- Exercice : diagnostiquer un hook de protection mal écrit (auto-corrigé)
 - Quiz 5-10 questions
 
 ---

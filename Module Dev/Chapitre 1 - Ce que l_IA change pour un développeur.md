@@ -239,7 +239,7 @@ Architectures où le modèle enchaîne plusieurs actions en autonomie pour accom
 Fichier de contexte projet standardisé, lu nativement par la plupart des outils agentiques (Copilot, Cursor, Codex, Gemini CLI...). Né chez OpenAI en 2025, gouverné aujourd'hui par l'Agentic AI Foundation aux côtés de MCP.
 
 **Chain of thought (CoT)**
-Technique de prompting qui demande au modèle de raisonner étape par étape avant de répondre. Améliore significativement la qualité sur les tâches de raisonnement et les algorithmes complexes.
+Technique de prompting qui demande au modèle de raisonner étape par étape avant de répondre. Elle améliorait nettement la qualité sur les tâches de raisonnement et les algorithmes complexes ; les modèles à raisonnement l'intègrent désormais en interne (voir le réglage d'effort de réflexion).
 
 **Chunking**
 Découpage d'un document ou d'une codebase en segments pour l'indexation dans un système RAG. La qualité du chunking impacte directement la qualité des réponses.
